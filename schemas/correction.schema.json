@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aislewatch/correction.schema.json",
+  "title": "Manager correction",
+  "description": "Written by the record_correction MCP tool (or the review queue) and processed by the Codex correction worker.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["correction_id", "created_at", "source", "refs", "manager_text", "status"],
+  "properties": {
+    "correction_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source": { "type": "string", "enum": ["manager", "review"] },
+    "refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alert_id": { "type": "string" },
+        "window_ids": { "type": "array", "items": { "type": "string" } },
+        "camera_id": { "type": "string" },
+        "t0": { "type": "string", "format": "date-time" },
+        "t1": { "type": "string", "format": "date-time" }
+      }
+    },
+    "manager_text": { "type": "string", "description": "What the manager said, verbatim." },
+    "hermes_claim": { "type": "string", "description": "The claim Hermes made that was corrected." },
+    "corrected_fact": { "type": "string", "description": "Hermes's one-line restatement of the corrected fact, e.g. 'Camera B door propped by a box from 14:02 to 14:31'." },
+    "is_rule": { "type": "boolean", "description": "True if the manager stated a site rule (also saved as a Hermes skill)." },
+    "status": { "type": "string", "enum": ["new", "processing", "done", "failed"] },
+    "worker_report": { "type": "string", "description": "Path to the worker's markdown report." }
+  }
+}

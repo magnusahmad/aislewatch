@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aislewatch/caption.schema.json",
+  "title": "Containment door window caption",
+  "description": "Structured caption for one 5-second window (10 frames) from one camera. All states refer to the END of the window unless the field name says otherwise.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "door_state",
+    "door_opening",
+    "state_changed_in_window",
+    "people_visible",
+    "person_in_doorway_at_end",
+    "object_in_doorway",
+    "caption"
+  ],
+  "properties": {
+    "door_state": {
+      "type": "string",
+      "enum": ["closed", "passing", "propped", "ajar"],
+      "description": "closed: fully shut. passing: open while a person (or a cart pushed by a person) is moving through the doorway. propped: held open by an object, nobody moving through. ajar: open or partly open, not held by an object, nobody moving through."
+    },
+    "door_opening": {
+      "type": "string",
+      "enum": ["none", "partial", "full"]
+    },
+    "state_changed_in_window": {
+      "type": "boolean",
+      "description": "True if door_state at the start of the window differs from door_state at the end."
+    },
+    "people_visible": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "People visible in the final frame."
+    },
+    "person_in_doorway_at_end": {
+      "type": "boolean",
+      "description": "True if, in the final frames, a person is in or moving through the doorway."
+    },
+    "object_in_doorway": {
+      "type": "string",
+      "enum": ["none", "box", "cart", "other"],
+      "description": "Object in the doorway or door track at the end of the window."
+    },
+    "caption": {
+      "type": "string",
+      "maxLength": 300,
+      "description": "One factual sentence describing the window."
+    }
+  }
+}
