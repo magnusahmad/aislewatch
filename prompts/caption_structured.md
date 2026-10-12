@@ -2,7 +2,7 @@
 
 Used identically for: the base and fine-tuned Qwen models, the teachers (Gemini 3.8 Flash, GPT-6.1 Sol), and as the prompt in every training sample. Change it only together with a schema version bump and a re-run of the baseline.
 
-Input: 10 JPEG frames from one window, in order, each preceded by its text label. Serve with structured output using `schemas/caption.schema.json`.
+Input: 10 JPEG frames from one window, in order, each preceded by its text label (built by `aislewatch.preprocess`, including the door crop if enabled). Serve with `response_format` JSON schema from `schemas/caption.schema.json` and `chat_template_kwargs: {"enable_thinking": false}`; train with thinking disabled in the renderer.
 
 ## System
 
