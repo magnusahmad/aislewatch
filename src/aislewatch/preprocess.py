@@ -68,8 +68,8 @@ def extract_window(video_path: Path, t_start: float) -> list[Image.Image]:
     return frames
 
 
-def resize(img: Image.Image) -> Image.Image:
-    scale = LONG_SIDE_PX / max(img.size)
+def resize(img: Image.Image, long_side: int = LONG_SIDE_PX) -> Image.Image:
+    scale = long_side / max(img.size)
     if scale >= 1:
         return img
     return img.resize((round(img.width * scale), round(img.height * scale)), Image.Resampling.LANCZOS)

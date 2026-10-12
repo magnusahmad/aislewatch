@@ -71,10 +71,14 @@ Pass when: base, `smoke-s1` and runtime-loaded `smoke-rt` all return schema-vali
 
 Pass when Hermes calls `get_alerts` and reports the aisle B temperature alert.
 
-## Results (fill in)
+## Results
 
 | Test | Result | Notes (versions, numbers, surprises) |
 |---|---|---|
-| S1 | | |
-| S2 | | |
-| S3 | | |
+| S1 | **Pass** (Oct 12, L40S 48GB) | prime-rl `7c9d474`. Loss 0.80 → 0.0000 by step 25 (memorised 8 rows), ~8.5 s/step. **768 px OOMed twice** in the fla gated-delta-rule Triton autotune (`expandable_segments` didn't help); **512 px fits** at 41.5/44.4 GiB peak (~144 image tokens/frame, ~2.0k tokens/sample). Adapter exported by the patch (58 MB, PEFT). LoRA covers MLPs in all 32 layers + q/k/v/o in the 8 full-attention layers; the 24 linear-attention layers' projections are not adapted. Vision tower untouched. |
+| S2 | **Pass** (same pod) | vLLM 0.31.0. Base, static adapter and runtime-loaded adapter all return schema-valid JSON, no `<think>`. Needs `VLLM_USE_FLASHINFER_SAMPLER=0` (FlashInfer sampler JIT needs nvcc, absent on the image). Latency at 3 cameras × 2 models, 512 px: p50 2.54 s, p95 3.02 s. Base Qwen called the propped window "ajar" (same error as Flash-Lite in the Oct 10 test); adapter correct (trained on it, so not evidence of learning). |
+| S3 | Pending | Needs Hermes installed and logged in to the Codex subscription. |
+
+Pod setup fixes found on the way: GitHub SSH URLs for the `prime-envs` submodule need `url.https://github.com/.insteadOf`; the uv installer exits non-zero on the pod image (fish config permission), so the script tolerates it; the pod user is `ubuntu`, not `root`.
+
+Cost: one L40S pod, ~62 min, $0.82.

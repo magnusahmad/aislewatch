@@ -84,6 +84,6 @@ async def main(base_url: str, adapter_path: str) -> None:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--base-url", default="http://localhost:8000")
-    ap.add_argument("--adapter-path", default="/root/runs/s1/adapter")
+    ap.add_argument("--adapter-path", default="/home/ubuntu/runs/s1/adapter")
     args = ap.parse_args()
     asyncio.run(main(args.base_url, args.adapter_path))

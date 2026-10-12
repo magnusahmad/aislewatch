@@ -4,7 +4,7 @@ Two 5 s windows (0-5 s passing, 5-10 s propped), each with 4 light augmentations
 gives 8 training rows: enough to check the format, the loss mask and that the
 model can overfit. Also writes the two clean windows as S2 request files.
 
-Usage: uv run python smoke/make_smoke_data.py <clip.mp4>
+Usage: uv run python smoke/make_smoke_data.py <clip.mp4> [long_side_px]
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from aislewatch import preprocess as pp
 
 OUT = pp.REPO_ROOT / "data" / "smoke"
 CAMERA_ID = "cam-A"
+LONG_SIDE = int(sys.argv[2]) if len(sys.argv) > 2 else pp.LONG_SIDE_PX
 
 # Ground truth for the baseline clip (Oct 10 test): technician opens the door,
 # props it with a box and walks back into the aisle.
@@ -63,14 +64,14 @@ def main(clip: Path) -> None:
         frames = pp.extract_window(clip, t0)
         frame_dir = OUT / "frames" / f"w{w_idx}"
         frame_dir.mkdir(parents=True, exist_ok=True)
-        clean = [pp.encode_jpeg(pp.resize(f)) for f in frames]
+        clean = [pp.encode_jpeg(pp.resize(f, LONG_SIDE)) for f in frames]
         for i, jpeg in enumerate(clean):
             (frame_dir / f"f{i:02d}.jpg").write_bytes(jpeg)
         request = {"window_id": f"smoke-w{w_idx}", "label": label,
                    "messages": pp.build_messages(clean, CAMERA_ID)}
         (OUT / "requests" / f"w{w_idx}.json").write_text(json.dumps(request))
         variants = [clean] + [
-            [pp.encode_jpeg(pp.resize(f)) for f in augment(frames, seed=w_idx * 100 + k)] for k in range(1, 4)
+            [pp.encode_jpeg(pp.resize(f, LONG_SIDE)) for f in augment(frames, seed=w_idx * 100 + k)] for k in range(1, 4)
         ]
         for k, jpegs in enumerate(variants):
             rows.append({
