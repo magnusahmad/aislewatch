@@ -1,0 +1,21 @@
+[project]
+name = "aislewatch"
+version = "0.1.0"
+description = "Data-centre aisle captioning with a fine-tuned small VLM, a Hermes investigator and a correction-driven training loop"
+requires-python = ">=3.12"
+dependencies = [
+    "pillow>=10",
+    "pyarrow>=16",
+    "httpx>=0.27",
+    "mcp>=2.3,<3",
+]
+
+[project.scripts]
+aw-smoke-stub-mcp = "aislewatch.smoke_stub_mcp:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aislewatch"]

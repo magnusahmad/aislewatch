@@ -1,0 +1,43 @@
+# S1 smoke test: Qwen3.5-9B VLM LoRA SFT on 8 rows (2 windows x 4 augmentations).
+# Goal: format accepted, assistant-only loss, loss falls towards zero (overfit), adapter exported.
+# Based on prime-rl examples/extra/vlm/sft.toml at commit 7c9d474.
+
+max_steps = 40
+
+[model]
+name = "Qwen/Qwen3.5-9B"
+optimization_dtype = "bfloat16"
+reduce_dtype = "bfloat16"
+
+[model.vlm]
+vision_encoder_attr = "model.visual"
+language_model_attr = "model.language_model"
+freeze_vision_encoder = true
+
+[model.lora]
+rank = 16
+alpha = 32
+dropout = 0.0
+# Default target_modules (q/k/v/o/gate/up/down). Check the "Found N target modules"
+# log line: Qwen3.5's linear-attention layers use other names and may be skipped.
+
+[model.ac]
+
+[renderer]
+name = "qwen3.5"
+enable_thinking = false
+
+[data]
+type = "sft"
+name = "/root/smoke/sft"
+batch_size = 1
+micro_batch_size = 1
+seq_len = 16384
+
+[data.loss_mask]
+assistant = true
+
+[optim]
+lr = 2e-4
+
+[ckpt]
