@@ -39,7 +39,7 @@ def main() -> None:
     ap.add_argument("--scenario", default="demo")
     ap.add_argument("--speed", type=float, default=1.0, help="site seconds per wall second")
     ap.add_argument("--base-url", help="vLLM endpoint, e.g. http://localhost:8000/v1 through the tunnel")
-    ap.add_argument("--fresh", action="store_true", help="wipe data/live before starting")
+    ap.add_argument("--fresh", action="store_true", help="wipe data/live and the Hermes site-rules skill before starting")
     ap.add_argument("--no-caption", action="store_true", help="feeds, sensors and tracker only (no model calls)")
     ap.add_argument("--set-current", help="set the live adapter model name and exit")
     args = ap.parse_args()
@@ -49,8 +49,12 @@ def main() -> None:
         p.write_text(json.dumps({"model": args.set_current}))
         print(f"current model -> {args.set_current}")
         return
-    if args.fresh and LIVE_DIR.exists():
-        shutil.rmtree(LIVE_DIR)
+    if args.fresh:
+        if LIVE_DIR.exists():
+            shutil.rmtree(LIVE_DIR)
+        from aislewatch.live.mcp_server import SITE_RULES
+        if SITE_RULES.exists():  # the demo creates this live from the manager's correction
+            shutil.rmtree(SITE_RULES.parent)
     asyncio.run(main_async(args))
 
 

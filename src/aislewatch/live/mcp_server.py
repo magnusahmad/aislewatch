@@ -10,6 +10,7 @@ import json
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 import httpx
 from mcp.server.mcpserver import MCPServer
@@ -138,17 +139,42 @@ async def inspect_clip(camera: str, t0: str, t1: str, question: str) -> dict:
             "model": INSPECT_MODEL, "answer": text, "error": err, "window_ids": sorted({w for _, _, w in frames})}
 
 
+SITE_RULES = Path.home() / ".hermes" / "skills" / "aislewatch" / "site-rules" / "SKILL.md"
+
+
+def save_site_rule(rule: str) -> bool:
+    """Append a rule to the Hermes site-rules skill (created on first use). Returns False if already present."""
+    rule = " ".join(rule.split())
+    lines = SITE_RULES.read_text().splitlines() if SITE_RULES.exists() else [
+        "---", "name: site-rules",
+        "description: Site rules stated by the manager. Check these before concluding whether anything is a violation or needs an alert.",
+        "---", "", "# Site rules", "", "Stated by the site manager; apply them in every investigation.", "", "## Rules", ""]
+    if any(rule.lower() == ln[2:].lower() for ln in lines if ln.startswith("- ")):
+        return False
+    SITE_RULES.parent.mkdir(parents=True, exist_ok=True)
+    SITE_RULES.write_text("\n".join(lines + [f"- {rule}"]) + "\n")
+    return True
+
+
 @mcp.tool()
 def record_correction(manager_text: str, corrected_fact: str, hermes_claim: str = "", alert_id: int | None = None,
-                      camera: str = "", t0: str = "", t1: str = "", is_rule: bool = False) -> dict:
-    """Record a manager correction for the training loop (processed by the Codex correction worker)."""
+                      camera: str = "", t0: str = "", t1: str = "", rule: str = "") -> dict:
+    """Record a manager correction for the training loop (processed by the Codex correction worker).
+    If the manager states a site rule, pass it as `rule` (one plain sentence with any threshold); it is saved to
+    the site-rules skill and applies to investigations from now on."""
     con = connect()
     cid = f"corr-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:4]}"
     refs = {k: v for k, v in {"alert_id": alert_id, "camera_id": camera, "t0": t0, "t1": t1}.items() if v}
     con.execute("INSERT INTO corrections VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (cid, datetime.now().isoformat(timespec="seconds"), "manager", json.dumps(refs), manager_text,
-                 hermes_claim, corrected_fact, int(is_rule), "new", None))
-    return {"correction_id": cid, "status": "new", "refs": refs}
+                 hermes_claim, corrected_fact, int(bool(rule)), "new", None))
+    result = {"correction_id": cid, "status": "new", "refs": refs}
+    if rule:
+        added = save_site_rule(rule)
+        result["site_rule"] = {"rule": rule, "saved_to": "site-rules skill", "new": added,
+                               "applies": "to your investigations from now on; the captioning model learns from the "
+                                          "correction at its next training run"}
+    return result
 
 
 @mcp.tool()
