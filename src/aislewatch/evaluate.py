@@ -62,8 +62,11 @@ def load_env() -> None:
         for line in env.read_text().splitlines():
             if "=" in line and not line.lstrip().startswith("#"):
                 k, v = line.split("=", 1)
-                if v.strip():
-                    os.environ.setdefault(k.strip(), v.strip().strip('"'))
+                v = v.strip().strip('"')
+                if v:  # accept gemini-api-key as well as GEMINI_API_KEY
+                    os.environ.setdefault(k.strip().upper().replace("-", "_"), v)
+                    if v.startswith("sk-or-"):  # an OpenRouter key, whatever the variable is called
+                        os.environ.setdefault("OPENROUTER_API_KEY", v)
 
 
 def models_config() -> dict:

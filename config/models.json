@@ -1,20 +1,110 @@
 {
-  "_note": "Endpoints and list prices for evaluation. Prices per million tokens unless stated; check date recorded per entry. Model IDs marked VERIFY must be checked against the provider before use.",
-  "qwen-base": {"kind": "vllm", "base_url": "http://localhost:8000/v1", "model": "qwen-base",
-                "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},
-                "price": {"usd_per_gpu_hour": 0.82, "checked": "2026-10-12", "note": "L40S 48GB, Prime Intellect (Massed Compute)"}},
-  "qwen-v1": {"kind": "vllm", "base_url": "http://localhost:8000/v1", "model": "qwen-v1",
-              "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},
-              "price": {"usd_per_gpu_hour": 0.82, "checked": "2026-10-12"}},
-  "qwen-v2": {"kind": "vllm", "base_url": "http://localhost:8000/v1", "model": "qwen-v2",
-              "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},
-              "price": {"usd_per_gpu_hour": 0.82, "checked": "2026-10-12"}},
-  "gemini-3.8-flash": {"kind": "api", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-3.8-flash",
-                       "api_key_env": "GEMINI_API_KEY", "verify": "model id",
-                       "price": {"usd_per_m_input": 0.75, "usd_per_m_output": 3.75, "checked": "2026-10-08", "note": "standard (live) tier; announced to double from 2027-01-01"}},
-  "gpt-6.1-sol": {"kind": "api", "base_url": "https://api.openai.com/v1", "model": "gpt-6.1-sol",
-                  "api_key_env": "OPENAI_API_KEY", "verify": "model id and price"},
-  "qwen-siliconflow": {"kind": "api", "base_url": "https://api.siliconflow.com/v1", "model": "Qwen/Qwen3.5-9B",
-                       "api_key_env": "SILICONFLOW_API_KEY", "verify": "model id",
-                       "price": {"usd_per_call": 0.00042465, "checked": "2026-10-10", "note": "one measured call, 10 s clip"}}
+  "_note": "Endpoints and list prices. API models go through OpenRouter (key in .env as OPENROUTER_API_KEY or gemini-api-key). vLLM entries are our own GPU.",
+  "qwen-base": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen-base",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "qwen-v1": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen-v1",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12"
+    }
+  },
+  "qwen-v2": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen-v2",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12"
+    }
+  },
+  "gemini-3.8-flash": {
+    "kind": "api",
+    "provider": "openrouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "google/gemini-3.8-flash",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "price": {
+      "usd_per_m_input": 0.75,
+      "usd_per_m_output": 3.75,
+      "checked": "2026-10-13",
+      "note": "OpenRouter list price, standard tier. Announced to double from 2027-01-01."
+    }
+  },
+  "gpt-6.1-sol": {
+    "kind": "api",
+    "provider": "openrouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "openai/gpt-6.1-sol",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "price": {
+      "usd_per_m_input": 2.0,
+      "usd_per_m_output": 10.0,
+      "checked": "2026-10-13",
+      "note": "OpenRouter list price, standard tier."
+    }
+  },
+  "qwen-siliconflow": {
+    "kind": "api",
+    "base_url": "https://api.siliconflow.com/v1",
+    "model": "Qwen/Qwen3.5-9B",
+    "api_key_env": "SILICONFLOW_API_KEY",
+    "verify": "model id",
+    "price": {
+      "usd_per_call": 0.00042465,
+      "checked": "2026-10-10",
+      "note": "one measured call, 10 s clip"
+    }
+  },
+  "gemini-3.5-flash-lite": {
+    "kind": "api",
+    "provider": "openrouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "google/gemini-3.5-flash-lite",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "price": {
+      "usd_per_m_input": 0.3,
+      "usd_per_m_output": 2.5,
+      "checked": "2026-10-13",
+      "note": "OpenRouter list price, standard tier."
+    }
+  },
+  "qwen-openrouter": {
+    "kind": "api",
+    "provider": "openrouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "qwen/qwen3.5-9b",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "price": {
+      "usd_per_m_input": 0.1,
+      "usd_per_m_output": 0.15,
+      "checked": "2026-10-13",
+      "note": "OpenRouter list price, standard tier. Base Qwen3.5-9B, hosted pay-per-token (no LoRA)."
+    }
+  }
 }
