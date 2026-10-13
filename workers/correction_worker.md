@@ -1,6 +1,6 @@
 # Correction worker instructions (for Codex)
 
-You are processing one manager correction for the AisleWatch captioning system. Use only the `aw` CLI. Do not read or write the SQLite database directly, and do not edit prompts, schemas, configs or code.
+You are processing one manager correction for the AisleWatch captioning system. Use only the `aw` CLI (run it as `uv run aw ...`; every command prints JSON). Do not read or write the SQLite database directly, and do not edit prompts, schemas, configs or code.
 
 Input: a correction ID, given in the task.
 
@@ -8,7 +8,8 @@ Input: a correction ID, given in the task.
 
 1. **Load it.** `aw correction show <id>`. Set status: `aw correction set-status <id> processing`.
 
-2. **Find affected windows.** `aw windows list --camera <cam> --from <t0 - 60s> --to <t1 + 60s>`. If the correction references an alert, use `aw alert show <alert_id>` to get the camera and span.
+2. **Find affected windows.** `aw windows list --correction <id>` (the correction's camera and span, padded by 60 s). Or explicitly: `aw windows list --camera <cam> --from <HH:MM:SS> --to <HH:MM:SS>`.
+   **Test cameras:** windows marked `"test_camera": true` (camera B) are evidence only. Use them to understand the error (captions, teacher votes), but they can never be labelled. The training labels come from similar windows on other cameras (step 6), so for a test-camera correction step 6 is mandatory.
 
 3. **Compare current captions.** `aw captions show --windows <ids> --models qwen-current,qwen-base`.
 
@@ -19,8 +20,8 @@ Input: a correction ID, given in the task.
    - **reasoning:** captions match the teacher-agreed labels, but Hermes's claim was still wrong.
    - **both**, or **unclear**.
 
-6. **Find similar windows** (only if a caption error was found):
-   `aw search similar --window <a mislabelled window> --limit 40` and `aw search disagreements --since 24h --state <wrong state> --limit 40`.
+6. **Find similar windows** (if a caption error was found, and always for a test-camera correction):
+   `aw search similar --window <a mislabelled window> --limit 40` and `aw search disagreements --since-min 60 --state <wrong state> --limit 40`.
    Then `aw teacher label --windows <those ids>` (no hint: the hint applies only to the corrected span).
 
 7. **Write labels.** For every labelled window:

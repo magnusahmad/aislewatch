@@ -24,6 +24,12 @@ CREATE TABLE IF NOT EXISTS alerts (
   alert_id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, camera_id TEXT, aisle TEXT, model_id TEXT,
   started_at REAL, detected_at REAL, window_ids TEXT, detail TEXT, shadow INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS sensor (aisle TEXT, t REAL, temp_c REAL, PRIMARY KEY (aisle, t));
+CREATE TABLE IF NOT EXISTS teacher_labels (
+  window_id TEXT, model_id TEXT, door_state TEXT, json TEXT, hint TEXT, error TEXT, created_at REAL,
+  PRIMARY KEY (window_id, model_id, hint));
+CREATE TABLE IF NOT EXISTS labels (
+  window_id TEXT PRIMARY KEY, door_state TEXT, json TEXT, status TEXT, source TEXT, correction_id TEXT,
+  reason TEXT, teacher_votes TEXT, created_at REAL);
 CREATE TABLE IF NOT EXISTS corrections (
   correction_id TEXT PRIMARY KEY, created_at TEXT, source TEXT, refs TEXT, manager_text TEXT,
   hermes_claim TEXT, corrected_fact TEXT, is_rule INTEGER, status TEXT, worker_report TEXT);

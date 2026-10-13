@@ -146,8 +146,27 @@ def collect_sequences(include_unverified: bool):
         yield seq_dir, metas, [k.with_suffix(".png") for k in keys], states
 
 
+def collect_live_labels(include_fake: bool):
+    """Windows labelled by the correction loop (teacher-agreed or human), from the live store."""
+    db = pp.REPO_ROOT / "data" / "live" / "aislewatch.db"
+    if not db.exists():
+        return
+    from aislewatch.live.store import LIVE_DIR, connect, rows
+    con = connect(db)
+    for r in rows(con, """SELECT l.window_id, l.json, l.source, l.correction_id, w.camera_id, w.frames_dir FROM labels l
+                          JOIN windows w ON w.window_id = l.window_id WHERE l.status = 'accepted'"""):
+        if r["camera_id"] in TEST_CAMERAS or (r["source"].endswith("_fake") and not include_fake):
+            continue
+        cap = json.loads(r["json"])
+        if any(k not in cap for k in pp.caption_field_order()):
+            continue  # incomplete teacher output (e.g. stand-in teacher)
+        d = LIVE_DIR / r["frames_dir"]
+        frames = [(d / f"f{i:02d}.jpg").read_bytes() for i in range(pp.FRAMES_PER_WINDOW)]
+        yield r, {k: cap[k] for k in pp.caption_field_order()}, frames
+
+
 def build(name: str, include_unverified: bool, seed: int, still_variants: dict, seq_variants: dict,
-          val_frac: float) -> Path:
+          val_frac: float, include_live: bool = True, include_fake: bool = False) -> Path:
     rng = random.Random(seed)
     out = pp.REPO_ROOT / "data" / "datasets" / name
     (out / "test").mkdir(parents=True, exist_ok=True)
@@ -209,6 +228,11 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
                 add(split, f"{seq}-t{v}-w{w}", camera, _frames([pil[i] for i in idx], cond, rng),
                     caption, "sequence", f"seq:{seq}")
 
+    if include_live:
+        for r, caption, frames in collect_live_labels(include_fake):
+            add("train", f"live-{r['window_id']}", r["camera_id"], frames, caption, f"loop:{r['source']}",
+                f"live:{r['correction_id'] or r['window_id']}")
+
     for split in ("train", "val"):
         rng.shuffle(rows[split])
         if rows[split]:
@@ -231,10 +255,11 @@ def main() -> None:
     ap.add_argument("--include-unverified", action="store_true")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--val-frac", type=float, default=0.15)
+    ap.add_argument("--no-live", action="store_true", help="exclude correction-loop labels")
     args = ap.parse_args()
     build(args.name, args.include_unverified, args.seed,
           still_variants={"train": 6, "val": 2, "test": 2}, seq_variants={"train": 4, "val": 2, "test": 2},
-          val_frac=args.val_frac)
+          val_frac=args.val_frac, include_live=not args.no_live)
 
 
 if __name__ == "__main__":
