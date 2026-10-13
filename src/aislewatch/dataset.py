@@ -100,8 +100,14 @@ def keyframe_fields(seq: str, meta: dict, state: str) -> dict:
 
 # ---------- windows ------------------------------------------------------------------------------
 
-def _frames(images: list[Image.Image], cond: degrade.Conditions, rng: random.Random) -> list[bytes]:
-    return [pp.encode_jpeg(degrade.apply(pp.prepare_frame(im), cond, rng)) for im in images]
+def _frames(images: list[Image.Image], cond: degrade.Conditions, rng: random.Random,
+            view: "degrade.Viewpoint | None" = None) -> list[bytes]:
+    return [pp.encode_jpeg(degrade.apply(pp.prepare_frame(im, view=view), cond, rng)) for im in images]
+
+
+def _view(split: str, variant: int, rng: random.Random) -> "degrade.Viewpoint | None":
+    """Camera-position augmentation for training windows only; variant 0 keeps the original framing."""
+    return degrade.Viewpoint.sample(rng) if split == "train" and variant > 0 else None
 
 
 def _hash(group: str) -> int:
@@ -206,7 +212,7 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
         caption = still_caption(meta, state)
         for v in range(still_variants[split]):
             cond = degrade.Conditions.sample(rng, mild=(v == 0))
-            add(split, f"{meta['id']}-s{v}", camera, _frames([img] * pp.FRAMES_PER_WINDOW, cond, rng),
+            add(split, f"{meta['id']}-s{v}", camera, _frames([img] * pp.FRAMES_PER_WINDOW, cond, rng, _view(split, v, rng)),
                 caption, "still", group)
 
     for seq_dir, metas, imgs, states in seqs:
@@ -217,6 +223,7 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
         for v in range(seq_variants[split]):
             timeline = [i for i in range(len(pil)) for _ in range(rng.randint(2, 6))]  # 1-3 s per keyframe
             cond = degrade.Conditions.sample(rng, mild=(v == 0))
+            view = _view(split, v, rng)  # one camera position for the whole timeline variant
             for w, start in enumerate(range(0, max(1, len(timeline) - pp.FRAMES_PER_WINDOW + 1), 4)):
                 idx = timeline[start:start + pp.FRAMES_PER_WINDOW]
                 if len(idx) < pp.FRAMES_PER_WINDOW:
@@ -225,7 +232,7 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
                 caption = {**keyframe_fields(seq, metas[last], states[last]),
                            "state_changed_in_window": states[first] != states[last]}
                 caption = {k: caption[k] for k in pp.caption_field_order()}
-                add(split, f"{seq}-t{v}-w{w}", camera, _frames([pil[i] for i in idx], cond, rng),
+                add(split, f"{seq}-t{v}-w{w}", camera, _frames([pil[i] for i in idx], cond, rng, view),
                     caption, "sequence", f"seq:{seq}")
 
     if include_live:

@@ -48,3 +48,26 @@ def apply(img: Image.Image, c: Conditions, rng: random.Random) -> Image.Image:
     buf = io.BytesIO()
     out.save(buf, format="JPEG", quality=max(20, c.jpeg_quality + rng.randint(-5, 5)))
     return Image.open(io.BytesIO(buf.getvalue())).convert("RGB")
+
+
+@dataclass(frozen=True)
+class Viewpoint:
+    """A slightly different fixed-camera position: zoom (crop), shift and small roll. Same for every frame of a
+    window. Training augmentation only, so the model learns the door rather than one framing."""
+    scale: float   # fraction of the frame kept (0.78-0.92 = zoom in; <=0.92 hides rotation corners)
+    dx: float      # crop centre shift, fraction of width
+    dy: float      # crop centre shift, fraction of height
+    angle: float   # degrees
+
+    @classmethod
+    def sample(cls, rng: random.Random) -> "Viewpoint":
+        return cls(rng.uniform(0.78, 0.92), rng.uniform(-0.05, 0.05), rng.uniform(-0.05, 0.05), rng.uniform(-2.0, 2.0))
+
+    def apply(self, img: Image.Image) -> Image.Image:
+        w, h = img.size
+        out = img.rotate(self.angle, resample=Image.Resampling.BILINEAR) if abs(self.angle) > 0.05 else img
+        cw, ch = w * self.scale, h * self.scale
+        cx = min(max(w / 2 + self.dx * w, cw / 2), w - cw / 2)  # keep the crop inside the frame
+        cy = min(max(h / 2 + self.dy * h, ch / 2), h - ch / 2)
+        box = (round(cx - cw / 2), round(cy - ch / 2), round(cx + cw / 2), round(cy + ch / 2))
+        return out.crop(box).resize((w, h), Image.Resampling.LANCZOS)

@@ -106,5 +106,95 @@
       "checked": "2026-10-13",
       "note": "OpenRouter list price, standard tier. Base Qwen3.5-9B, hosted pay-per-token (no LoRA)."
     }
+  },
+  "qwen4b-base": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen4b-base",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "qwen4b-v1": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen4b-v1",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "qwen4b-v2": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen4b-v2",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "qwen9b-base": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen9b-base",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "qwen9b-v1": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen9b-v1",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "qwen9b-v2": {
+    "kind": "vllm",
+    "base_url": "http://localhost:8000/v1",
+    "model": "qwen9b-v2",
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "price": {
+      "usd_per_gpu_hour": 0.82,
+      "checked": "2026-10-12",
+      "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
   }
 }

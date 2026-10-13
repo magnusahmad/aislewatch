@@ -83,9 +83,14 @@ def blur_overlay(img: Image.Image) -> Image.Image:
     return out
 
 
-def prepare_frame(img: Image.Image, long_side: int = LONG_SIDE_PX) -> Image.Image:
-    """Every frame from every source (stills, clips, live streams) goes through this before encoding."""
-    return resize(blur_overlay(img.convert("RGB")), long_side)
+def prepare_frame(img: Image.Image, long_side: int = LONG_SIDE_PX, view=None) -> Image.Image:
+    """Every frame from every source (stills, clips, live streams) goes through this before encoding.
+    `view` (training augmentation only) simulates a slightly different camera position; it is applied
+    after the overlay blur so the blurred corner moves with the image."""
+    img = blur_overlay(img.convert("RGB"))
+    if view is not None:
+        img = view.apply(img)
+    return resize(img, long_side)
 
 
 def resize(img: Image.Image, long_side: int = LONG_SIDE_PX) -> Image.Image:
