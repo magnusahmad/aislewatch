@@ -42,7 +42,7 @@ import sys, json
 r = [x for x in json.load(sys.stdin)["gpu_resources"] if not x.get("is_spot") and x.get("stock_status") != "Unavailable"]
 r.sort(key=lambda x: x["price_value"])
 print(" ".join(str(r[0][k]) for k in ("id", "price_value", "provider")) if r else "")')
-[ -n "$OFFER" ] || { log "no $GPU_TYPE available"; OUTCOME=no-gpu; exit 1; }
+[ -n "$OFFER" ] || { log "no $GPU_TYPE available"; OUTCOME=no-gpu; exit 75; }   # 75 = capacity, retryable (pod/wait_launch.sh)
 read -r OFFER_ID PRICE PROVIDER <<< "$OFFER"
 WORST=$(python3 -c "print(round($PRICE * $MAX_HOURS, 2))")
 BALANCE=$(prime --plain wallet 2>/dev/null | python3 -c 'import sys,re; m=re.search(r"Balance:\s*\$([0-9.]+)", sys.stdin.read()); print(m.group(1) if m else 0)')
@@ -51,8 +51,13 @@ python3 -c "import sys; sys.exit(0 if $WORST <= $MAX_USD and $BALANCE >= $WORST 
 
 # 2. Create the pod and arm the watchdog immediately.
 START=$(date +%s)
-POD=$(prime --plain pods create --id "$OFFER_ID" --name "aislewatch-$RUN" --disk-size 200 -y < /dev/null 2>&1 | grep -o 'created pod [0-9a-f]*' | awk '{print $3}')
-[ -n "$POD" ] || { log "pod creation failed"; OUTCOME=create-failed; exit 1; }
+CREATE_OUT=$(prime --plain pods create --id "$OFFER_ID" --name "aislewatch-$RUN" --disk-size 200 --image "${IMAGE:-ubuntu_22_cuda_12}" -y < /dev/null 2>&1)
+POD=$(printf '%s\n' "$CREATE_OUT" | grep -oi 'created pod [0-9a-f]*' | awk '{print $3}')
+if [ -z "$POD" ]; then
+  log "pod creation failed; prime said:"; printf '%s\n' "$CREATE_OUT" | tail -20; OUTCOME=create-failed
+  printf '%s' "$CREATE_OUT" | grep -qiE "HTTP 503|available right now|try again later" && exit 75   # out of stock: retryable
+  exit 1
+fi
 log "pod $POD created"
 WATCH_S=$(python3 -c "print(int($MAX_HOURS * 3600))")
 nohup bash -c "sleep $WATCH_S; prime --plain pods terminate $POD -y; echo '{\"pod\": \"$POD\", \"watchdog_fired\": \"'\$(date +%FT%T)'\"}' >> '$LEDGER'" \
