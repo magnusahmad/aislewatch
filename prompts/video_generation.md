@@ -30,7 +30,7 @@ CCTV security camera still. Fixed camera mounted high inside a data centre cold 
 ## Video prompt template
 
 ```
-Keep the scene exactly as in the first frame. Static, locked-off CCTV camera: no camera movement, no zoom, no cuts. [ACTION]. Realistic security-camera footage, natural walking speed, [8|10] seconds.
+Keep the scene exactly as in the first frame. Static, locked-off CCTV camera: no camera movement, no zoom, no cuts. [ACTION]. Realistic security-camera footage, natural walking speed, [8|10] seconds. No audio: silent footage with no sound, music or speech.
 ```
 
 ## Segment actions (combine into clips)
