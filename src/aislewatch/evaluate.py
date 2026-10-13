@@ -261,3 +261,32 @@ def cost_per_10k(cfg: dict, s: dict) -> str:
 
 if __name__ == "__main__":
     main()
+
+
+def agreement() -> None:
+    """Teacher agreement: where two models' door_state agree, and how often the agreed label matches the
+    human label. This is the auto-accept rule of the correction loop (SPEC §7), measured before trusting it.
+
+    Usage: uv run aw-agreement --dataset v1 --split test --a gemini-3.8-flash --b gpt-6.1-sol
+    """
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", required=True)
+    ap.add_argument("--split", default="test")
+    ap.add_argument("--a", required=True)
+    ap.add_argument("--b", required=True)
+    args = ap.parse_args()
+    d = pp.REPO_ROOT / "data" / "results" / args.dataset / args.split
+
+    def load(name):
+        return {r["window_id"]: r for r in map(json.loads, (d / f"{name}-structured.jsonl").read_text().splitlines())}
+
+    a, b = load(args.a), load(args.b)
+    ids = sorted(set(a) & set(b))
+    state = lambda r: r["pred"]["door_state"] if r["pred"] else None  # noqa: E731
+    agree = [i for i in ids if state(a[i]) and state(a[i]) == state(b[i])]
+    correct = [i for i in agree if state(a[i]) == a[i]["label"]["door_state"]]
+    report = {"n": len(ids), "agree_rate": round(len(agree) / len(ids), 3) if ids else 0.0,
+              "agreed_label_accuracy": round(len(correct) / len(agree), 3) if agree else None,
+              "wrong_but_agreed": [i for i in agree if i not in correct]}
+    (d / f"agreement-{args.a}-{args.b}.json").write_text(json.dumps(report, indent=2))
+    print(json.dumps({k: v for k, v in report.items() if k != "wrong_but_agreed"}), len(report["wrong_but_agreed"]), "agreed-but-wrong")
