@@ -1,0 +1,75 @@
+{
+  "templates": {
+    "edit": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nEdit target: the attached image, a CCTV still of a data-centre cold-aisle containment entrance.\nChange: {change}\nThe containment doors are sliding doors that move sideways along a top track; never show hinged or swinging doors.\nKeep unchanged: camera position, angle, framing and wide-angle lens distortion; lighting and exposure; server racks and their LEDs; floor tiles; ceiling; the door sign; the door frame and track; wall labels; the image's slightly soft, compressed surveillance-camera quality.\nPeople: {people}\nAvoid: new objects other than those named in the change; motion blur; changes to any text; making the image sharper, more colourful or more cinematic than the original.\nOutput: one 1280x720 image. Copy the final image to {out_path} and print that path.",
+    "reference": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nReference image (style and setting only, not an edit target): the attached CCTV still of the same data hall.\nGenerate: {scene} The containment doors are sliding doors that move sideways along a top track; never show hinged or swinging doors. Doors fully closed.\nMatch the reference's camera quality: slightly soft, compressed, mildly desaturated surveillance footage with wide-angle distortion, and a small timestamp overlay in the top-left corner like the reference.\nPeople: none.\nAvoid: cinematic lighting, sharp detail, objects in the doorway.\nOutput: one 1280x720 image. Copy it to {out_path} and print that path."
+  },
+  "jobs": [
+    {
+      "id": "cam-B_closed",
+      "template": "reference",
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/bases",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a different camera in the same data hall, mounted high inside the cold aisle and looking back toward the aisle's entrance. In the middle distance, the same pair of transparent sliding containment doors in a grey aluminium frame, with the white-floored corridor visible through them. Black server racks with small green and blue status LEDs line both sides of the frame; perforated grey raised-floor tiles; LED ceiling panels."
+    },
+    {
+      "id": "cam-C_closed",
+      "template": "reference",
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/bases",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a different camera in the same data hall, mounted high on the corridor wall and looking side-on across the entrance of the cold-aisle containment: the same pair of transparent sliding doors in a grey aluminium frame set into the containment wall, server racks visible through the glass. Slightly dimmer, warmer lighting than the reference."
+    },
+    {
+      "camera_id": "cam-A",
+      "out_dir": "data/gen/stills/cam-A",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "id": "A-prop-wedge",
+      "intended_state": "propped",
+      "note": "hard: smallest prop",
+      "change": "The left sliding door is open about 30 cm and held open by a small black rubber door wedge. The small black rubber door wedge straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-A",
+      "out_dir": "data/gen/stills/cam-A",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "id": "A-ajar-60",
+      "intended_state": "ajar",
+      "change": "The left sliding door is open about 60 cm; nothing is holding it and the track is empty.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-A",
+      "out_dir": "data/gen/stills/cam-A",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "id": "A-ajar-phone",
+      "intended_state": "ajar",
+      "note": "person near but busy",
+      "change": "The left sliding door is open about 30 cm; nothing is holding it and the track is empty.",
+      "people": "One technician in a dark polo shirt standing still on a phone call about 2 m inside the aisle from the doorway, facing away from the doors; not moving towards them. Remove any other figure."
+    },
+    {
+      "camera_id": "cam-A",
+      "out_dir": "data/gen/stills/cam-A",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "id": "A-prop-cart-busy",
+      "intended_state": "propped",
+      "note": "person near but busy",
+      "change": "The left sliding door is open about 70 cm and held open by a grey metal equipment cart. The grey metal equipment cart straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "One technician in a dark polo shirt just inside the aisle, close to the doors, writing notes on a clipboard while looking at a rack; not moving towards the doorway."
+    },
+    {
+      "camera_id": "cam-A",
+      "out_dir": "data/gen/stills/cam-A",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "id": "A-closed-busy",
+      "intended_state": "closed",
+      "note": "person near but busy",
+      "change": "The doors stay fully closed.",
+      "people": "One technician in a dark polo shirt just inside the aisle right by the doors, checking a server in a rack; not moving towards the doorway. Remove any other figure."
+    }
+  ]
+}

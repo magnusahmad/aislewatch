@@ -18,28 +18,28 @@ from aislewatch.preprocess import REPO_ROOT
 
 
 def run_job(spec: dict, job: dict, force: bool) -> dict:
-    out_dir = REPO_ROOT / spec["out_dir"]
+    out_dir = REPO_ROOT / job.get("out_dir", spec.get("out_dir"))
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{job['id']}.png"
     meta_path = out_dir / f"{job['id']}.json"
     if out_path.exists() and not force:
         return {"id": job["id"], "status": "skipped (exists)"}
-    prompt = spec["template"].format(
-        change=job["change"], people=job["people"], out_path=out_path.relative_to(REPO_ROOT)
-    )
+    template = spec["templates"][job.get("template", "edit")] if "templates" in spec else spec["template"]
+    prompt = template.format_map({**spec.get("fragments", {}), **job, "out_path": out_path.relative_to(REPO_ROOT)})
+    base_image = job.get("base_image", spec.get("base_image"))
     log_path = out_dir / f"{job['id']}.codex.log"
     started = time.time()
     with log_path.open("w") as log:
         proc = subprocess.run(
             # Prompt before -i: -i takes multiple files and would swallow it.
             ["codex", "exec", "-C", str(REPO_ROOT), "-s", "workspace-write", prompt,
-             "-i", str(REPO_ROOT / spec["base_image"])],
+             "-i", str(REPO_ROOT / base_image)],
             stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, timeout=900,
         )
     seconds = round(time.time() - started, 1)
     ok = proc.returncode == 0 and out_path.exists()
     meta = {
-        "id": job["id"], "camera_id": spec["camera_id"], "base_image": spec["base_image"],
+        "id": job["id"], "camera_id": job.get("camera_id", spec.get("camera_id")), "base_image": base_image,
         "intended_state": job["intended_state"], "note": job.get("note", ""),
         "prompt": prompt, "generator": "codex image_gen (built-in, subscription)",
         "seconds": seconds, "exit_code": proc.returncode,

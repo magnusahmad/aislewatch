@@ -1,0 +1,177 @@
+{
+  "templates": {
+    "edit": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nEdit target: the attached image, a CCTV still of a data-centre cold-aisle containment entrance.\nChange: {change}\nThe containment doors are sliding doors: each door panel stays flat and parallel to the doorway and only moves sideways along the top track. Never rotate, swing or hinge a door panel, and never show a door angled outwards or inwards.\nKeep unchanged: camera position, angle, framing and wide-angle lens distortion; lighting and exposure; server racks and their LEDs; floor tiles; ceiling; the door sign; the door frame and track; wall labels; the image's slightly soft, compressed surveillance-camera quality.\nPeople: {people}\nAvoid: new objects other than those named in the change; motion blur; changes to any text; making the image sharper, more colourful or more cinematic than the original.\nOutput: one 1280x720 image. Copy the final image to {out_path} and print that path."
+  },
+  "jobs": [
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-open-full",
+      "intended_state": "ajar",
+      "change": "Both sliding doors are slid fully open, leaving the doorway clear. Nothing is in the doorway or the track.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-prop-box",
+      "intended_state": "propped",
+      "change": "The left sliding door is open about 60 cm and held open by a brown cardboard box. The brown cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-prop-cart",
+      "intended_state": "propped",
+      "change": "The left sliding door is open about 70 cm and held open by a grey metal equipment cart. The grey metal equipment cart straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut. The cart's handlebar is pressed against the door.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-prop-extinguisher",
+      "intended_state": "propped",
+      "change": "The left sliding door is open about 40 cm and held open by a red fire extinguisher. The red fire extinguisher straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-ajar-30",
+      "intended_state": "ajar",
+      "change": "The left sliding door is open about 30 cm, leaving a clear vertical gap; nothing is holding it and the track is empty.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-ajar-20",
+      "intended_state": "ajar",
+      "note": "small gap (20 cm: doors are small in camera B's frame)",
+      "change": "The doors have not fully closed: there is a narrow vertical gap of about 20 cm between them; nothing is in the gap or the track.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-prop-box-busy",
+      "intended_state": "propped",
+      "note": "person near but busy",
+      "change": "The left sliding door is open about 60 cm and held open by a brown cardboard box. The brown cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "One technician in a dark polo shirt just inside the aisle, close to the doors, writing notes on a clipboard at a rack; not moving towards the doorway."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-ajar-phone",
+      "intended_state": "ajar",
+      "note": "person near but busy",
+      "change": "The left sliding door is open about 30 cm; nothing is holding it and the track is empty.",
+      "people": "One technician standing still on a phone call about 2 m from the doorway, facing away from the doors; not moving towards them."
+    },
+    {
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/bases/cam-B_closed.png",
+      "id": "B-closed-busy",
+      "intended_state": "closed",
+      "note": "person near but busy",
+      "change": "The doors stay fully closed.",
+      "people": "One technician right by the doors checking a server in a rack; not moving towards the doorway."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-open-full",
+      "intended_state": "ajar",
+      "change": "Both sliding doors are slid fully open, leaving the doorway clear. Nothing is in the doorway or the track.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-prop-box",
+      "intended_state": "propped",
+      "change": "The left sliding door is open about 60 cm and held open by a brown cardboard box. The brown cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-prop-cart",
+      "intended_state": "propped",
+      "change": "The left sliding door is open about 70 cm and held open by a grey metal equipment cart. The grey metal equipment cart straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut. The cart's handlebar is pressed against the door.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-prop-extinguisher",
+      "intended_state": "propped",
+      "change": "The left sliding door is open about 40 cm and held open by a red fire extinguisher. The red fire extinguisher straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-ajar-30",
+      "intended_state": "ajar",
+      "change": "The left sliding door is open about 30 cm, leaving a clear vertical gap; nothing is holding it and the track is empty.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-ajar-10",
+      "intended_state": "ajar",
+      "note": "hard: small gap",
+      "change": "The doors have not fully closed: there is a narrow vertical gap of about 10 cm between them; nothing is in the gap or the track.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-prop-box-busy",
+      "intended_state": "propped",
+      "note": "person near but busy",
+      "change": "The left sliding door is open about 60 cm and held open by a brown cardboard box. The brown cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "One technician in a dark polo shirt just inside the aisle, close to the doors, writing notes on a clipboard at a rack; not moving towards the doorway."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-ajar-phone",
+      "intended_state": "ajar",
+      "note": "person near but busy",
+      "change": "The left sliding door is open about 30 cm; nothing is holding it and the track is empty.",
+      "people": "One technician standing still on a phone call about 2 m from the doorway, facing away from the doors; not moving towards them."
+    },
+    {
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "id": "C-closed-busy",
+      "intended_state": "closed",
+      "note": "person near but busy",
+      "change": "The doors stay fully closed.",
+      "people": "One technician right by the doors checking a server in a rack; not moving towards the doorway."
+    }
+  ]
+}
