@@ -13,6 +13,11 @@ ROWS=$(cd "$HOME/aislewatch" && uv run python -c "import pyarrow.parquet as pq; 
 STEPS=$(( (ROWS * EPOCHS + BATCH - 1) / BATCH ))
 WARMUP=$(( STEPS / 15 > 1 ? STEPS / 15 : 1 ))
 CFG="$HOME/runs/$RUN.toml"; mkdir -p "$HOME/runs"
+# Tied-embedding models (Qwen3.5-4B) train with a zero LM head in prime-rl (loss = ln(vocab), grad norm 0);
+# train on an untied copy instead. The adapter serves unchanged on the original model.
+HF_MODEL="$MODEL"
+MODEL=$(cd "$HOME/prime-rl" && uv run python "$HOME/aislewatch/pod/untie.py" "$HF_MODEL" "$HOME/models/untied-${HF_MODEL##*/}" | tail -1)
+[ -n "$MODEL" ] || { echo "CHECK FAILED: untie.py produced no model path"; exit 1; }
 cat > "$CFG" <<EOF
 max_steps = $STEPS
 
@@ -81,8 +86,34 @@ print("resolved config check:", "OK" if not bad else f"MISMATCH {bad}", f"(not f
 sys.exit(1 if bad else 0)
 PY
 
-# 2. Train.
-uv run sft @ "$CFG" --output-dir "$HOME/runs" --run.name "$RUN" --clean 2>&1 | tee "$HOME/runs/$RUN.log"
+# 2. Train, with an early guard: after 3 logged steps, a loss pinned at ln(vocab) (all-zero logits) or an
+#    all-zero grad norm means nothing is learning -> kill it now instead of paying for the remaining steps.
+uv run sft @ "$CFG" --output-dir "$HOME/runs" --run.name "$RUN" --clean > "$HOME/runs/$RUN.log" 2>&1 &
+SFT_PID=$!
+GUARD_OK=0
+while kill -0 "$SFT_PID" 2>/dev/null; do
+  TL=$(ls "$HOME/runs/$RUN/logs/"*/trainer.log 2>/dev/null | head -1)
+  if [ "$GUARD_OK" = 0 ] && [ -n "$TL" ]; then
+    VERDICT=$(python3 - "$TL" <<'PY'
+import math, re, sys
+t = open(sys.argv[1], errors="ignore").read()
+s = re.findall(r"Step (\d+) \|[^|]*\| Loss ([0-9.]+) \| Grad\. Norm ([0-9.]+)", t)
+if len(s) < 3: print("wait"); sys.exit()
+loss = [float(x[1]) for x in s[:3]]; gn = [float(x[2]) for x in s[:3]]
+uniform = math.log(248320)
+if all(abs(l - uniform) < 0.02 for l in loss): print(f"DEAD loss pinned at ln(vocab)={uniform:.4f}: {loss}")
+elif all(g == 0 for g in gn): print(f"DEAD grad norm 0 for 3 steps: {gn}")
+else: print(f"ok loss {loss} grad norm {gn}")
+PY
+)
+    case "$VERDICT" in
+      DEAD*) echo "CHECK FAILED: not learning: ${VERDICT#DEAD }"; pkill -P "$SFT_PID"; kill "$SFT_PID"; pkill -f "prime_rl.trainer" || true; exit 1 ;;
+      ok*) echo "learning check: $VERDICT"; GUARD_OK=1 ;;
+    esac
+  fi
+  sleep 15
+done
+wait "$SFT_PID" || { echo "CHECK FAILED: sft exited non-zero"; tail -30 "$HOME/runs/$RUN.log"; exit 1; }
 
 # 3. Post-checks: targets found, loss decreased, adapter present and non-trivial.
 TRAINER_LOG=$(ls "$HOME/runs/$RUN/logs/"*/trainer.log | head -1)
