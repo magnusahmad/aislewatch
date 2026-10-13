@@ -1,0 +1,57 @@
+{
+  "templates": {
+    "edit": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nEdit target: the attached image, a CCTV still of a data-centre cold-aisle containment entrance.\nChange: {change}\nThe containment doors are sliding doors: each door panel stays flat and parallel to the doorway and only moves sideways along the top track. Never rotate, swing or hinge a door panel, and never show a door angled outwards or inwards.\nKeep unchanged: camera position, angle, framing and wide-angle lens distortion; lighting and exposure; server racks and their LEDs; floor tiles; ceiling; the door sign; the door frame and track; wall labels; the image's slightly soft, compressed surveillance-camera quality.\nPeople: {people}\nAvoid: new objects other than those named in the change; motion blur; changes to any text; making the image sharper, more colourful or more cinematic than the original.\nOutput: one 1280x720 image. Copy the final image to {out_path} and print that path."
+  },
+  "jobs": [
+    {
+      "id": "B-prop-box-v2",
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/stills/cam-B/B-open-full.png",
+      "intended_state": "propped",
+      "note": "redo from open image",
+      "change": "Keep both door panels exactly where they are in the attached image (open). Add a brown cardboard box so the open left door is held open by cardboard box. The cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "id": "B-prop-box-busy-v2",
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/stills/cam-B/B-open-full.png",
+      "intended_state": "propped",
+      "note": "redo from open image; person beside, not in, the doorway",
+      "change": "Keep both door panels exactly where they are in the attached image (open). Add a brown cardboard box so the open left door is held open by cardboard box. The cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "One technician in a dark polo shirt standing at a rack inside the aisle, about 1.5 m to the side of the doorway and clearly not in it, writing notes on a clipboard; not moving towards the doorway."
+    },
+    {
+      "id": "B-ajar-phone-v2",
+      "camera_id": "cam-B",
+      "out_dir": "data/gen/stills/cam-B",
+      "base_image": "data/gen/stills/cam-B/B-ajar-30.png",
+      "intended_state": "ajar",
+      "note": "redo; person must not hide the gap",
+      "change": "Keep the doors exactly as they are, with the same gap; nothing is holding them and the track is empty.",
+      "people": "One technician standing still on a phone call at the side of the aisle near the racks, facing away from the doors and not blocking the view of the doorway or the gap."
+    },
+    {
+      "id": "C-prop-box-v2",
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/stills/cam-C/C-open-full.png",
+      "intended_state": "propped",
+      "note": "redo from open image",
+      "change": "Keep both door panels exactly where they are in the attached image (open). Add a brown cardboard box so the open door is held open by cardboard box. The cardboard box straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut.",
+      "people": "None anywhere in the image."
+    },
+    {
+      "id": "C-prop-cart-v2",
+      "camera_id": "cam-C",
+      "out_dir": "data/gen/stills/cam-C",
+      "base_image": "data/gen/stills/cam-C/C-open-full.png",
+      "intended_state": "propped",
+      "note": "redo from open image",
+      "change": "Keep both door panels exactly where they are in the attached image (open). Add a grey metal equipment cart standing in the doorway so the open door is held open by cart. The cart straddles the door frame: it sits in the door's track across the line where the door would close and is in direct contact with the door's leading edge, so it is clearly blocking the door from sliding shut. The cart's handlebar is pressed against the door.",
+      "people": "None anywhere in the image."
+    }
+  ]
+}

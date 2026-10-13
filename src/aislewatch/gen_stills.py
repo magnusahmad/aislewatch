@@ -44,6 +44,7 @@ def run_job(spec: dict, job: dict, force: bool) -> dict:
         "prompt": prompt, "generator": "codex image_gen (built-in, subscription)",
         "seconds": seconds, "exit_code": proc.returncode,
         "label": "unverified", "human_state": None,
+        **{k: job[k] for k in ("sequence", "order", "frame_state", "split") if k in job},
     }
     if ok:
         meta_path.write_text(json.dumps(meta, indent=2))
