@@ -55,7 +55,19 @@ def load_split(dataset: str, split: str) -> list[dict]:
     return items
 
 
+def load_env() -> None:
+    """Load KEY=VALUE lines from the repo's .env into the environment (without overriding)."""
+    env = pp.REPO_ROOT / ".env"
+    if env.exists():
+        for line in env.read_text().splitlines():
+            if "=" in line and not line.lstrip().startswith("#"):
+                k, v = line.split("=", 1)
+                if v.strip():
+                    os.environ.setdefault(k.strip(), v.strip().strip('"'))
+
+
 def models_config() -> dict:
+    load_env()
     return json.loads((pp.REPO_ROOT / "config" / "models.json").read_text())
 
 

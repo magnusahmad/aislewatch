@@ -1,0 +1,26 @@
+{
+  "_note": "Demo feeds. Camera B (held-out, never trained on) carries the incidents; A and C are background traffic. Segments: still (held N s) or keyframe sequence (hold per keyframe). Ground truth comes from the reviewed labels.",
+  "cameras": [
+    {"camera_id": "cam-B", "aisle": "hall-2-aisle-B", "segments": [
+      {"still": "bases/cam-B_closed", "seconds": 30},
+      {"sequence": "cam-B/B-seq-pass-in", "each_s": 2},
+      {"still": "bases/cam-B_closed", "seconds": 30},
+      {"sequence": "cam-B/B-seq-prop-box-leave", "hold_s": [2, 2, 3, 3, 150]},
+      {"still": "bases/cam-B_closed", "seconds": 40},
+      {"sequence": "cam-B/B-seq-drift-ajar", "hold_s": [2, 2, 3, 120]},
+      {"still": "bases/cam-B_closed", "seconds": 60}
+    ]},
+    {"camera_id": "cam-A", "aisle": "hall-2-aisle-A", "segments": [
+      {"still": "bases/cam-A_closed", "seconds": 45},
+      {"sequence": "cam-A/A-seq-pass-in", "each_s": 2},
+      {"still": "bases/cam-A_closed", "seconds": 60},
+      {"sequence": "cam-A/A-seq-cart-through", "hold_s": [2, 2, 2, 4]},
+      {"still": "bases/cam-A_closed", "seconds": 120}
+    ]},
+    {"camera_id": "cam-C", "aisle": "hall-2-aisle-C", "segments": [
+      {"still": "bases/cam-C_closed", "seconds": 60},
+      {"sequence": "cam-C/C-seq-pass-in", "each_s": 2},
+      {"still": "bases/cam-C_closed", "seconds": 150}
+    ]}
+  ]
+}

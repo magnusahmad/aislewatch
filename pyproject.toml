@@ -21,6 +21,8 @@ aw-eval = "aislewatch.evaluate:main"
 aw-scoreboard = "aislewatch.evaluate:scoreboard"
 aw-review = "aislewatch.review_app:main"
 aw-agreement = "aislewatch.evaluate:agreement"
+aw-live = "aislewatch.live.run:main"
+aw-mcp = "aislewatch.live.mcp_server:main"
 
 [build-system]
 requires = ["hatchling"]

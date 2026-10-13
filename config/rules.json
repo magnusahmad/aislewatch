@@ -1,0 +1,10 @@
+{
+  "_note": "Demo values. containment_breach_after_s would be ~120 in production; the demo uses 20 s and says so. Temperature model is simulated and driven by scenario ground truth.",
+  "containment_breach_after_s": 20,
+  "temp_baseline_c": 22.0,
+  "temp_delay_s": 30,
+  "temp_rise_c_per_min": 2.0,
+  "temp_decay_c_per_min": 1.0,
+  "temp_max_rise_c": 4.5,
+  "temp_alert_rise_c": 2.0
+}
