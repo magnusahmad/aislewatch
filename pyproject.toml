@@ -19,6 +19,7 @@ aw-review-sheets = "aislewatch.review_sheets:main"
 aw-build-dataset = "aislewatch.dataset:main"
 aw-eval = "aislewatch.evaluate:main"
 aw-scoreboard = "aislewatch.evaluate:scoreboard"
+aw-review = "aislewatch.review_app:main"
 
 [build-system]
 requires = ["hatchling"]
