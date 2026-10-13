@@ -24,7 +24,7 @@ SCHEMA_PATH = REPO_ROOT / "schemas" / "caption.schema.json"
 FRAMES_PER_WINDOW = 10
 FRAME_SPACING_S = 0.5
 WINDOW_S = FRAMES_PER_WINDOW * FRAME_SPACING_S
-LONG_SIDE_PX = 768
+LONG_SIDE_PX = 512  # S1: 768 px does not fit LoRA SFT on a 48 GB card; S4 checks 512 is enough to see the gap
 JPEG_QUALITY = 85
 IMAGE_PLACEHOLDER = "<image>"
 
@@ -66,6 +66,26 @@ def extract_window(video_path: Path, t_start: float) -> list[Image.Image]:
             raise ValueError(f"No frame at t={t:.3f}s in {video_path}")
         frames.append(Image.open(io.BytesIO(png)).convert("RGB"))
     return frames
+
+
+# Burned-in CCTV timestamp/camera overlay, top-left, as a fraction of width/height. Generated stills garble
+# it differently per edit, which a model could learn as a shortcut, so it is blurred for every source.
+OVERLAY_BOX = (0.0, 0.0, 0.22, 0.10)
+
+
+def blur_overlay(img: Image.Image) -> Image.Image:
+    from PIL import ImageFilter
+
+    w, h = img.size
+    box = (0, 0, int(w * OVERLAY_BOX[2]), int(h * OVERLAY_BOX[3]))
+    out = img.copy()
+    out.paste(img.crop(box).filter(ImageFilter.GaussianBlur(radius=max(4, w // 160))), box)
+    return out
+
+
+def prepare_frame(img: Image.Image, long_side: int = LONG_SIDE_PX) -> Image.Image:
+    """Every frame from every source (stills, clips, live streams) goes through this before encoding."""
+    return resize(blur_overlay(img.convert("RGB")), long_side)
 
 
 def resize(img: Image.Image, long_side: int = LONG_SIDE_PX) -> Image.Image:

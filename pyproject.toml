@@ -8,12 +8,17 @@ dependencies = [
     "pyarrow>=16",
     "httpx>=0.27",
     "mcp>=2.3,<3",
+    "numpy>=2.5.4",
 ]
 
 [project.scripts]
 aw-smoke-stub-mcp = "aislewatch.smoke_stub_mcp:main"
 aw-gen-stills = "aislewatch.gen_stills:main"
 aw-clip-cards = "aislewatch.clip_cards:main"
+aw-review-sheets = "aislewatch.review_sheets:main"
+aw-build-dataset = "aislewatch.dataset:main"
+aw-eval = "aislewatch.evaluate:main"
+aw-scoreboard = "aislewatch.evaluate:scoreboard"
 
 [build-system]
 requires = ["hatchling"]
