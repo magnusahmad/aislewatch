@@ -23,6 +23,7 @@ aw-review = "aislewatch.review_app:main"
 aw-agreement = "aislewatch.evaluate:agreement"
 aw-live = "aislewatch.live.run:main"
 aw-mcp = "aislewatch.live.mcp_server:main"
+aw-dashboard = "aislewatch.live.dashboard:main"
 
 [build-system]
 requires = ["hatchling"]
