@@ -258,7 +258,7 @@ def main() -> None:
     ap.add_argument("--no-live", action="store_true", help="exclude correction-loop labels")
     args = ap.parse_args()
     build(args.name, args.include_unverified, args.seed,
-          still_variants={"train": 6, "val": 2, "test": 2}, seq_variants={"train": 4, "val": 2, "test": 2},
+          still_variants={"train": 6, "val": 3, "test": 3}, seq_variants={"train": 4, "val": 3, "test": 4},
           val_frac=args.val_frac, include_live=not args.no_live)
 
 
