@@ -12,6 +12,8 @@ dependencies = [
 
 [project.scripts]
 aw-smoke-stub-mcp = "aislewatch.smoke_stub_mcp:main"
+aw-gen-stills = "aislewatch.gen_stills:main"
+aw-clip-cards = "aislewatch.clip_cards:main"
 
 [build-system]
 requires = ["hatchling"]

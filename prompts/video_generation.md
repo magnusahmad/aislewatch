@@ -57,3 +57,12 @@ Keep the scene exactly as in the first frame. Static, locked-off CCTV camera: no
 1. **Box incident:** idle-closed → prop-box → propped-idle (≥ 40 s) → close-up.
 2. **Ajar incident:** pass-in → drift-ajar → ajar-idle (≥ 40 s) → ajar-guard-misses.
 3. **Normal traffic:** walk-past → cart-through → pass-in → idle-closed (no alert expected).
+
+## Lessons from the first camera A batch (Oct 12)
+
+- Image edits re-render the whole scene: framing and rack spacing drift slightly between stills. Useful variety; don't assume a pixel-fixed door region without checking.
+- Lighting changes requested from the generator come out weak. Do dimming, noise and compression in code (the degradation step), not in prompts.
+- State "sliding doors that move sideways along the top track; never hinged or swinging doors" in every prompt; one edit turned them into hinged doors.
+- **People near a propped or ajar door:** they may be close to the doorway, as long as they are clearly occupied with something else and not moving towards or through it: checking a rack, writing notes, standing on the phone. Don't only place people far away; the near-but-busy case is the subtle one the model must learn (Magnus, Oct 12).
+- Generated timestamps vary between edits; preprocessing blurs the overlay corner for every source.
+- Clip cards for Flow: `uv run aw-clip-cards config/gen/clips-<camera>.json` writes first/last frames and prompts to `data/gen/clip-cards/<camera>/`.

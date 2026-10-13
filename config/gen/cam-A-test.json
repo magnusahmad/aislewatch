@@ -1,0 +1,32 @@
+{
+  "camera_id": "cam-A",
+  "base_image": "data/gen/bases/cam-A_closed.png",
+  "out_dir": "data/gen/stills/cam-A",
+  "template": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nEdit target: the attached image, a CCTV still of a data-centre cold-aisle containment entrance.\nChange: {change}\nKeep unchanged: camera position, angle, framing and wide-angle lens distortion; lighting and exposure; server racks and their LEDs; floor tiles; ceiling; the \"COLD AISLE – KEEP DOORS CLOSED\" sign; the door frame and track; the side wall labels; the image's slightly soft, compressed surveillance-camera quality.\nPeople: {people}\nAvoid: new objects other than those named in the change; motion blur; changes to any text; making the image sharper, more colourful or more cinematic than the original.\nOutput: one 1280x720 image. Copy the final image to {out_path} and print that path.",
+  "jobs": [
+    {"id": "A-open-full", "intended_state": "ajar", "note": "fully open, nothing holding it",
+     "change": "Both sliding doors are slid fully open, leaving the doorway clear. Nothing is in the doorway or the track.",
+     "people": "None anywhere in the image; remove the faint figure in the aisle."},
+    {"id": "A-prop-box", "intended_state": "propped",
+     "change": "The left sliding door is open about 60 cm and held open by a brown cardboard box sitting on the floor in the door's track, wedged against the door's edge.",
+     "people": "None anywhere in the image."},
+    {"id": "A-prop-cart", "intended_state": "propped",
+     "change": "The left sliding door is fully open and a grey metal equipment cart is parked in the doorway, blocking the door from closing.",
+     "people": "None anywhere in the image."},
+    {"id": "A-prop-extinguisher", "intended_state": "propped", "note": "hard: small prop",
+     "change": "The left sliding door is open about 40 cm and held open by a red fire extinguisher standing on the floor in the door's track.",
+     "people": "None anywhere in the image."},
+    {"id": "A-ajar-30", "intended_state": "ajar",
+     "change": "The left sliding door is open about 30 cm, leaving a clear vertical gap; nothing is holding it and the track is empty.",
+     "people": "None anywhere in the image."},
+    {"id": "A-ajar-10", "intended_state": "ajar", "note": "hard: small gap",
+     "change": "The left sliding door has not fully closed: there is a narrow vertical gap of about 10 cm between the two doors; nothing is in the gap or the track.",
+     "people": "None anywhere in the image."},
+    {"id": "A-closed-dim", "intended_state": "closed", "note": "hard: lighting",
+     "change": "The doors stay fully closed. Make the scene dimmer, as if half the ceiling lights are off: about 40% darker, with slightly more sensor noise.",
+     "people": "None anywhere in the image."},
+    {"id": "A-prop-box-person", "intended_state": "propped", "note": "hard: person nearby",
+     "change": "Same as a box-propped door: the left door is held open about 60 cm by a brown cardboard box in the track.",
+     "people": "One technician in a dark polo shirt and lanyard, standing about halfway down the aisle facing a rack, working on a server; not near the door."}
+  ]
+}
