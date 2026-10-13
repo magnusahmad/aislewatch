@@ -132,9 +132,7 @@ async def run_sensors(stop: asyncio.Event) -> None:
 
 
 def site_clock_start() -> float:
-    """Demo site time starts at 14:00 local today, so timestamps read naturally."""
-    lt = time.localtime()
-    return time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 14, 0, 0, 0, 0, -1))
-
-
-
+    """Site time starts at the wall-clock time the live run started (written by aw-live), so timestamps
+    match the real clock at speed 1. Falls back to now."""
+    p = LIVE_DIR / "clock.json"
+    return json.loads(p.read_text())["t0"] if p.exists() else time.time()

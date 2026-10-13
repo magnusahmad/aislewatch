@@ -10,6 +10,7 @@ import argparse
 import asyncio
 import json
 import shutil
+import time
 
 from aislewatch.live import feeds, workers
 from aislewatch.live.store import LIVE_DIR
@@ -18,6 +19,10 @@ from aislewatch.preprocess import REPO_ROOT
 
 async def main_async(args) -> None:
     stop = asyncio.Event()
+    clock = LIVE_DIR / "clock.json"
+    if not clock.exists():
+        LIVE_DIR.mkdir(parents=True, exist_ok=True)
+        clock.write_text(json.dumps({"t0": round(time.time())}))
     t0 = workers.site_clock_start()
     tasks = [asyncio.create_task(feeds.run_feeds(args.scenario, args.speed, t0, stop))]
     if not args.no_caption:

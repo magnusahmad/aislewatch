@@ -34,7 +34,7 @@ def _t(value: str | None, default: float) -> float:
     if "T" in value or "-" in value:
         return datetime.fromisoformat(value).timestamp()
     parts = [int(p) for p in value.split(":")] + [0, 0]
-    lt = time.localtime(site_clock_start())
+    lt = time.localtime(site_clock_start())  # times like "14:05" are on the site's current day
     return time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, parts[0], parts[1], parts[2], 0, 0, -1))
 
 
@@ -44,12 +44,14 @@ def _fmt(t: float) -> str:
 
 @mcp.tool()
 def get_alerts(since: str = "", include_shadow: bool = False) -> list[dict]:
-    """Alerts since a time: containment breaches (from captions) and temperature excursions (sensors)."""
+    """Alerts since a time: containment breaches (from the live captioning model) and temperature excursions (inlet sensors).
+    include_shadow=True also returns breaches another model would have raised."""
     con = connect()
     out = []
+    live = current_model()
     for a in rows(con, "SELECT * FROM alerts WHERE detected_at >= ? ORDER BY detected_at", _t(since, 0)):
-        if a["shadow"] and not include_shadow:
-            continue
+        if a["model_id"] not in (None, live) and not include_shadow:
+            continue  # breach alerts from a model that is not the live captioner
         out.append({"alert_id": a["alert_id"], "type": a["type"], "camera_id": a["camera_id"], "aisle": a["aisle"],
                     "started_at": _fmt(a["started_at"]), "detected_at": _fmt(a["detected_at"]), "detail": a["detail"],
                     "model": a["model_id"], "window_ids": json.loads(a["window_ids"])[-6:]})
@@ -94,7 +96,7 @@ def search_captions(query: str, camera: str = "", t0: str = "", t1: str = "", li
 
 @mcp.tool()
 def get_sensor(aisle: str, t0: str = "", t1: str = "") -> dict:
-    """Simulated inlet temperature for an aisle: summary, peak and recent readings."""
+    """Inlet temperature for an aisle: summary, peak and recent readings."""
     con = connect()
     rs = rows(con, "SELECT t, temp_c FROM sensor WHERE aisle = ? AND t >= ? AND t <= ? ORDER BY t", aisle, _t(t0, 0), _t(t1, 1e12))
     if not rs:
