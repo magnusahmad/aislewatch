@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import random
 from collections import Counter
 from pathlib import Path
@@ -175,7 +176,7 @@ def collect_live_labels(include_fake: bool):
 
 def build(name: str, include_unverified: bool, seed: int, still_variants: dict, seq_variants: dict,
           val_frac: float, include_live: bool = True, include_fake: bool = False,
-          val_cameras: frozenset[str] = frozenset()) -> Path:
+          val_cameras: frozenset[str] = frozenset(), test_from: str | None = None) -> Path:
     assert not (val_cameras & TEST_CAMERAS), "a test camera can't be a validation camera"
     rng = random.Random(seed)
     out = pp.REPO_ROOT / "data" / "datasets" / name
@@ -184,6 +185,8 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
     counts = {s: Counter() for s in rows}
 
     def add(split, window_id, camera, frames, caption, source, group):
+        if split == "test" and test_from:
+            return  # the frozen test set is copied from an earlier dataset below
         if split == "test":
             d = out / "test" / window_id
             d.mkdir(parents=True, exist_ok=True)
@@ -248,11 +251,19 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
         rng.shuffle(rows[split])
         if rows[split]:
             pq.write_table(pa.Table.from_pylist(rows[split]), out / f"{split}.parquet")
-    with (out / "test" / "test.jsonl").open("w") as f:
-        for r in rows["test"]:
-            f.write(json.dumps(r) + "\n")
+    if test_from:
+        # Reuse the earlier dataset's test windows byte for byte, so scores stay comparable across datasets.
+        # (Window cutting draws from the shared rng, so regenerating would change test whenever other data changes.)
+        shutil.rmtree(out / "test")
+        shutil.copytree(pp.REPO_ROOT / "data" / "datasets" / test_from / "test", out / "test")
+        for line in (out / "test" / "test.jsonl").read_text().splitlines():
+            counts["test"][json.loads(line)["label"]["door_state"]] += 1
+    else:
+        with (out / "test" / "test.jsonl").open("w") as f:
+            for r in rows["test"]:
+                f.write(json.dumps(r) + "\n")
     manifest = {"val_groups": sorted(val_groups), "name": name, "seed": seed, "include_unverified": include_unverified,
-                "long_side_px": pp.LONG_SIDE_PX, "test_cameras": sorted(TEST_CAMERAS), "val_cameras": sorted(val_cameras),
+                "long_side_px": pp.LONG_SIDE_PX, "test_cameras": sorted(TEST_CAMERAS), "val_cameras": sorted(val_cameras), "test_from": test_from,
                 "counts": {s: dict(c) for s, c in counts.items()},
                 "totals": {s: sum(c.values()) for s, c in counts.items()}}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
@@ -267,11 +278,12 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--val-frac", type=float, default=0.15)
     ap.add_argument("--val-camera", action="append", default=[], help="hold out this whole camera as validation (repeatable)")
+    ap.add_argument("--test-from", help="copy this dataset's frozen test set instead of regenerating it")
     ap.add_argument("--no-live", action="store_true", help="exclude correction-loop labels")
     args = ap.parse_args()
     build(args.name, args.include_unverified, args.seed,
           still_variants={"train": 6, "val": 3, "test": 3}, seq_variants={"train": 4, "val": 3, "test": 4},
-          val_frac=args.val_frac, include_live=not args.no_live, val_cameras=frozenset(args.val_camera))
+          val_frac=args.val_frac, include_live=not args.no_live, val_cameras=frozenset(args.val_camera), test_from=args.test_from)
 
 
 if __name__ == "__main__":
