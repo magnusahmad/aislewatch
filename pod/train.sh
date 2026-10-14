@@ -86,7 +86,17 @@ print("resolved config check:", "OK" if not bad else f"MISMATCH {bad}", f"(not f
 sys.exit(1 if bad else 0)
 PY
 
-# 2. Train, with an early guard: after 3 logged steps, a loss pinned at ln(vocab) (all-zero logits) or an
+# 2. Wait for an empty GPU: vLLM's engine can still hold memory for a while after its port closes, and a
+#    trainer started into that dies at model load (Oct 14, v2: exit 1 after 28 s right after the base eval).
+for _ in $(seq 1 60); do
+  USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | head -1)
+  [ "${USED:-99999}" -lt 2000 ] && ! pgrep -f "vllm serve|EngineCore" > /dev/null && break
+  sleep 5
+done
+echo "GPU before training: $(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader | head -1)"
+[ "${USED:-99999}" -lt 2000 ] || { echo "CHECK FAILED: GPU still holds ${USED} MiB after 5 min"; nvidia-smi; exit 1; }
+
+# 3. Train, with an early guard: after 3 logged steps, a loss pinned at ln(vocab) (all-zero logits) or an
 #    all-zero grad norm means nothing is learning -> kill it now instead of paying for the remaining steps.
 uv run sft @ "$CFG" --output-dir "$HOME/runs" --run.name "$RUN" --clean > "$HOME/runs/$RUN.log" 2>&1 &
 SFT_PID=$!
@@ -113,9 +123,14 @@ PY
   fi
   sleep 15
 done
-wait "$SFT_PID" || { echo "CHECK FAILED: sft exited non-zero"; tail -30 "$HOME/runs/$RUN.log"; exit 1; }
+wait "$SFT_PID" || {
+  echo "CHECK FAILED: sft exited non-zero"; tail -30 "$HOME/runs/$RUN.log"
+  for f in $(ls "$HOME/runs/$RUN/logs/"*/trainer.log "$HOME/runs/$RUN/logs/"*/trainer/torchrun/*/*/*/stderr.log 2>/dev/null); do
+    echo "---- $f (last 40 lines)"; grep -v -E "SyntaxWarning|register_constant|make_block_ptr|warn\(" "$f" | tail -40
+  done
+  exit 1; }
 
-# 3. Post-checks: targets found, loss decreased, adapter present and non-trivial.
+# 4. Post-checks: targets found, loss decreased, adapter present and non-trivial.
 TRAINER_LOG=$(ls "$HOME/runs/$RUN/logs/"*/trainer.log | head -1)
 uv run python - "$TRAINER_LOG" "$HOME/runs/$RUN/adapter" "$HOME/runs/$RUN.train_report.json" "$STEPS" <<'PY'
 import json, re, sys, os

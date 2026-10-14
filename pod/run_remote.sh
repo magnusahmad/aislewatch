@@ -16,6 +16,7 @@ pull() {
   for size in $SIZES; do
     mkdir -p "$REPO/models/adapters/$RUN-$size"
     rsync -az "$HOST:runs/$RUN-$size/adapter/" "$REPO/models/adapters/$RUN-$size/" 2>/dev/null || true
+    rsync -az "$HOST:runs/$RUN-$size/logs" "$REPO/data/logs/$RUN/$RUN-$size-trainer/" 2>/dev/null || true
     rsync -az "$HOST:runs/$RUN-$size.toml" "$HOST:runs/$RUN-$size.log" "$HOST:runs/$RUN-$size.train_report.json" \
       "$REPO/data/logs/$RUN/" 2>/dev/null || true
   done
