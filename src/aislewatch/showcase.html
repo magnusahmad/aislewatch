@@ -137,6 +137,8 @@ footer { border-top: 1px solid var(--rule); padding: 32px 0 56px; font-family: "
 .lane:not(.done) .timer.running { color: var(--accent); }
 .lane .stream { margin-top: 10px; min-height: 3.2em; max-height: 4.8em; overflow: hidden; font-family: "Geist Mono", monospace; font-size: 11.5px;
   line-height: 1.6; color: var(--muted); word-break: break-word; display: flex; flex-direction: column-reverse; }
+.lane .cost { margin-top: 6px; text-align: right; font-family: "Geist Mono", monospace; font-size: 12px; letter-spacing: .06em; color: var(--muted); min-height: 1.2em; font-variant-numeric: tabular-nums; }
+.lane.done .cost { color: var(--foreground); }
 .lane .verdict { margin-top: 10px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; min-height: 1.2em; }
 .lane.ok .verdict { color: var(--sub-ok); } .lane.bad .verdict { color: var(--sub-bad); }
 .lane .verdict small { font-family: "Geist Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-left: 10px; font-weight: 400; }
@@ -346,6 +348,7 @@ function charts() {
     `All models get the same prompt and the same 114 windows from a camera none of them trained on (18 scenes, simulated). The 95% interval on AisleWatch's lead over Gemini 3.8 Flash is about −0.08 to +0.20 F1, so read it as on par or better.`,
     `Cost assumes continuous monitoring: 518,400 windows per camera per month. API models: measured tokens × OpenRouter list price. Self-hosted: GPU-hour price × measured throughput on one 48 GB GPU.`,
     `AisleWatch and base Qwen3.5-4B run on the same GPU. AisleWatch's answers are 38% shorter (61 vs 99 tokens), so it is slightly faster; the two were measured in separate sessions, so treat their speed and cost as roughly equal.`,
+    `Live demo cost per query: Gemini from that query's billed tokens at list price; AisleWatch and base Qwen3.5-4B from GPU-hour price × measured throughput, the same basis as the cost chart.`,
     `Speed is p95 because the slowest windows set how late an alert can be. On median, Gemini 3.5 Flash-Lite (${flash.latency_p50_s.toFixed(1)}s) is level with AisleWatch (${ours.latency_p50_s.toFixed(1)}s).`,
     `† Claude Opus 5.5 ran through a Claude subscription: its cost is estimated from OpenRouter's list price, and its latency (p90) from OpenRouter's served stats (${o.ttft_p90_s}s to first token, ${o.tps_p90} tokens/s). API models ran with reasoning off or minimal.`,
   ].map(t => `<p>${t}</p>`).join("");
@@ -375,14 +378,14 @@ function live() {
 
   const truth = L.label.door_state;
   $("#lanes").innerHTML = L.models.map(m => `<div class="lane ${m.id === "qwen4b-v2" ? "ours" : ""}" data-m="${m.id}">
-    <div class="head"><span class="name">${esc(m.name)}</span><span class="timer">0.0s</span></div>
+    <div class="head"><span class="name">${esc(m.name)}</span><span class="timer">0.0s</span></div><div class="cost"></div>
     <div class="stream"><span></span></div><div class="verdict"></div></div>`).join("");
   const lane = id => $(`.lane[data-m="${id}"]`);
   const timers = {};
   function reset() {
     Object.values(timers).forEach(clearInterval);
     document.querySelectorAll(".lane").forEach(l => { l.className = l.className.replace(/ (ok|bad|done|offline)/g, ""); $(".timer", l).textContent = "0.0s";
-      $(".timer", l).classList.remove("running"); $(".stream span", l).textContent = ""; $(".verdict", l).innerHTML = ""; });
+      $(".timer", l).classList.remove("running"); $(".stream span", l).textContent = ""; $(".verdict", l).innerHTML = ""; $(".cost", l).textContent = ""; });
     $("#live-note").textContent = "";
   }
   async function run(path, method) {
@@ -411,9 +414,18 @@ function live() {
       stopTimer(e.model, e.t); const said = e.pred ? e.pred.door_state : "no answer", ok = said === truth;
       l.classList.add("done", ok ? "ok" : "bad");
       $(".verdict", l).innerHTML = `${ok ? "✓" : "✗"} ${esc(said)}`;
+      $(".cost", l).textContent = queryCost(e) + " / query";
     }
     if (e.type === "offline" || e.type === "error") { stopTimer(e.model, null); $(".timer", l).textContent = "—"; l.classList.add("offline");
       $(".verdict", l).innerHTML = `<small>${esc(e.text)}</small>`; }
+  }
+  // This query's cost: billed tokens at list price for API models; GPU-hour price x measured throughput for the
+  // self-hosted ones (same basis as the cost chart). Recorded replays without usage fall back to the measured average.
+  function queryCost(e) {
+    const row = D.models.find(m => m.name === ({ "qwen4b-v2": "AisleWatch (Qwen3.5-4B + LoRA)", "qwen4b-base": "Qwen3.5-4B (base)", "gemini-3.8-flash": "Gemini 3.8 Flash" })[e.model]);
+    const usd = e.cost_usd ?? row?.usd_per_window;
+    if (usd == null) return "";
+    return "$" + (usd >= 0.001 ? usd.toFixed(4) : usd.toFixed(6));
   }
   $("#live-run").onclick = () => run("/api/live", "POST");
   fetch("/api/live/status", { cache: "no-store" }).then(r => r.json()).then(s => {

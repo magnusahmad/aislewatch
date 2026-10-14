@@ -57,8 +57,8 @@ ROWS = [("v2/test/qwen4b-v2", "AisleWatch (Qwen3.5-4B + LoRA)", "ours"),
 # (base Qwen said closed, AisleWatch and Gemini said propped on exactly these frames).
 LIVE_WINDOW = "B-seq-prop-box-leave-t2-w3"
 LIVE_SEQUENCE = pp.REPO_ROOT / "data" / "gen" / "seq" / "cam-B" / "B-seq-prop-box-leave"
-LIVE_MODELS = [("qwen4b-base", "Qwen3.5-4B (base)", "vllm"), ("gemini-3.8-flash", "Gemini 3.8 Flash", "api"),
-               ("qwen4b-v2", "AisleWatch", "vllm")]
+LIVE_MODELS = [("qwen4b-v2", "AisleWatch", "vllm"), ("qwen4b-base", "Qwen3.5-4B (base)", "vllm"),
+               ("gemini-3.8-flash", "Gemini 3.8 Flash", "api")]
 LIVE_RUNS = OUT / "live_runs"
 BOOTSTRAP = 2000
 
@@ -233,11 +233,12 @@ def _stream_model(model_id: str, kind: str, vllm_url: str | None, frames: list[b
         cfg["base_url"] = vllm_url
     body = ev.build_request(cfg, frames, "cam-B", "structured")
     body["stream"] = True
+    body["stream_options"] = {"include_usage": True}  # final chunk carries token counts -> this query's API cost
     headers = {"Authorization": f"Bearer {os.environ[cfg['api_key_env']]}"} if cfg.get("api_key_env") else {}
     if kind == "vllm" and os.environ.get("AW_VLLM_KEY"):  # the Modal deployment requires its API key
         headers = {"Authorization": f"Bearer {os.environ['AW_VLLM_KEY']}"}
     emit({"model": model_id, "type": "start", "t": round(time.perf_counter() - t0, 3)})
-    text = ""
+    text, usage = "", {}
     try:
         with httpx.Client(timeout=httpx.Timeout(120, connect=5)) as client:
             with client.stream("POST", cfg["base_url"].rstrip("/") + "/chat/completions", json=body, headers=headers) as r:
@@ -250,11 +251,17 @@ def _stream_model(model_id: str, kind: str, vllm_url: str | None, frames: list[b
                     if payload == "[DONE]":
                         break
                     chunk = json.loads(payload)
+                    usage = chunk.get("usage") or usage
                     delta = ((chunk.get("choices") or [{}])[0].get("delta") or {}).get("content") or ""
                     if delta:
                         text += delta
                         emit({"model": model_id, "type": "delta", "text": delta, "t": round(time.perf_counter() - t0, 3)})
-        emit({"model": model_id, "type": "done", "pred": ev.parse(text), "t": round(time.perf_counter() - t0, 3)})
+        price = cfg.get("price", {})
+        cost = None  # API: this query's billed tokens at list price. Self-hosted: left to the page (GPU-hour x throughput).
+        if "usd_per_m_input" in price and usage.get("prompt_tokens"):
+            cost = (usage["prompt_tokens"] * price["usd_per_m_input"] + usage.get("completion_tokens", 0) * price["usd_per_m_output"]) / 1e6
+        emit({"model": model_id, "type": "done", "pred": ev.parse(text), "t": round(time.perf_counter() - t0, 3),
+              "usage": usage, "cost_usd": cost})
     except Exception as e:  # noqa: BLE001 - shown in the panel
         offline = kind == "vllm" and isinstance(e, (httpx.ConnectError, httpx.ConnectTimeout))
         emit({"model": model_id, "type": "offline" if offline else "error",
