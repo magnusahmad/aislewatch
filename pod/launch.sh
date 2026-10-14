@@ -7,7 +7,7 @@
 #  - appends every pod to data/gpu/ledger.jsonl with times and estimated cost
 #
 # Usage: pod/launch.sh <dataset> <run> [sizes="4b 9b"]
-# Env:   GPU_TYPE=L40S_48GB MAX_HOURS=3.5 MAX_USD=4 STALL_MIN=20 EPOCHS=2 LR=1e-4
+# Env:   GPU_TYPE=L40S_48GB MAX_HOURS=3.5 MAX_USD=4 STALL_MIN=20 EPOCHS=2 LR=1e-4 EXCLUDE_PROVIDERS="runpod"
 set -uo pipefail
 DATASET="$1"; RUN="$2"; SIZES="${3:-4b 9b}"
 GPU_TYPE="${GPU_TYPE:-L40S_48GB}"; MAX_HOURS="${MAX_HOURS:-3.5}"; MAX_USD="${MAX_USD:-4}"
@@ -39,7 +39,9 @@ trap 'terminate "${OUTCOME:-error}"' EXIT
 # 1. Price and budget checks.
 OFFER=$(prime --plain availability list --gpu-type "$GPU_TYPE" --gpu-count 1 --output json 2>/dev/null | python3 -c '
 import sys, json
-r = [x for x in json.load(sys.stdin)["gpu_resources"] if not x.get("is_spot") and x.get("stock_status") != "Unavailable"]
+import os
+skip = set(os.environ.get("EXCLUDE_PROVIDERS", "runpod").split())   # runpod: listed-but-503 and never-provisioned pods (Oct 13)
+r = [x for x in json.load(sys.stdin)["gpu_resources"] if not x.get("is_spot") and x.get("stock_status") != "Unavailable" and x.get("provider") not in skip]
 r.sort(key=lambda x: x["price_value"])
 print(" ".join(str(r[0][k]) for k in ("id", "price_value", "provider")) if r else "")')
 [ -n "$OFFER" ] || { log "no $GPU_TYPE available"; OUTCOME=no-gpu; exit 75; }   # 75 = capacity, retryable (pod/wait_launch.sh)
@@ -66,12 +68,16 @@ WATCHDOG=$!
 log "watchdog armed: terminates $POD after $MAX_HOURS h (pid $WATCHDOG)"
 
 # 3. Wait for SSH (max 20 min).
-HOST=""; KEY_CLEARED=""
+HOST=""; KEY_CLEARED=""; WAIT_START=$(date +%s)
 for _ in $(seq 1 60); do
   HOST=$(prime --plain pods status "$POD" 2>/dev/null | awk '/^SSH/ {print $2}' | grep '@' || true)
   # Providers reuse IPs: drop any stale host key for this address or accept-new refuses to connect.
   [ -n "$HOST" ] && { [ -n "$KEY_CLEARED" ] || { ssh-keygen -R "${HOST#*@}" >/dev/null 2>&1; KEY_CLEARED=1; }; }
   [ -n "$HOST" ] && ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "$HOST" true < /dev/null 2>/dev/null && break
+  # No IP at all after 8 min means the provider never provisioned it: stop paying now.
+  if [ -z "$(prime --plain pods status "$POD" 2>/dev/null | awk '/^IP/ && $2 != "N/A" {print $2}')" ] && [ $(( $(date +%s) - WAIT_START )) -gt 480 ]; then
+    log "no IP assigned after 8 min: provider never provisioned the pod"; break
+  fi
   HOST=""; sleep 20
 done
 [ -n "$HOST" ] || { log "pod never became reachable"; OUTCOME=unreachable; exit 1; }
