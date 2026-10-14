@@ -52,6 +52,16 @@ ROWS = [("v2/test/qwen4b-v2", "AisleWatch (Qwen3.5-4B + LoRA)", "ours"),
         ("v2/test/qwen4b-base", "Qwen3.5-4B (base)", "open"),
         ("v1/test/qwen9b-base", "Qwen3.5-9B (base)", "open")]
 
+# Section 5, live demo: a camera no model trained on. The clip plays the keyframe sequence (technician props the
+# door with a box and leaves), then holds on the empty room; the models get the measured window of that end state
+# (base Qwen said closed, AisleWatch and Gemini said propped on exactly these frames).
+LIVE_WINDOW = "B-seq-prop-box-leave-t2-w3"
+LIVE_SEQUENCE = pp.REPO_ROOT / "data" / "gen" / "seq" / "cam-B" / "B-seq-prop-box-leave"
+LIVE_MODELS = [("qwen4b-base", "Qwen3.5-4B (base)", "vllm"), ("gemini-3.8-flash", "Gemini 3.8 Flash", "api"),
+               ("qwen4b-v2", "AisleWatch", "vllm")]
+LIVE_RUNS = OUT / "live_runs"
+BOOTSTRAP = 2000
+
 # Opus ran through the Claude Code subscription, so its wall-clock time includes CLI overhead. Its latency is
 # estimated from OpenRouter's served stats for the Anthropic endpoint (checked 2026-10-14):
 # time to first token + output tokens / throughput.
@@ -83,6 +93,20 @@ def _write_window(window_id: str, frames: list[bytes]) -> None:
     ims = [Image.open(io.BytesIO(f)).convert("RGB") for f in frames]
     ims[0].save(OUT / "gifs" / f"{window_id}.gif", save_all=True, append_images=ims[1:],
                 duration=int(pp.FRAME_SPACING_S * 1000), loop=0)
+
+
+def _f1_interval(rows: dict[str, dict], groups: dict[str, str]) -> list[float]:
+    """95% interval on macro F1, resampling whole scenes (windows from one scene succeed or fail together)."""
+    import random
+    by_group: dict[str, list[dict]] = {}
+    for wid, r in rows.items():
+        by_group.setdefault(groups.get(wid, wid), []).append(r)
+    keys, rng, vals = sorted(by_group), random.Random(0), []
+    for _ in range(BOOTSTRAP):
+        sample = [r for k in (rng.choice(keys) for _ in keys) for r in by_group[k]]
+        vals.append(ev.metrics(sample)["macro_f1"])
+    vals.sort()
+    return [round(vals[int(0.025 * BOOTSTRAP)], 3), round(vals[int(0.975 * BOOTSTRAP) - 1], 3)]
 
 
 def _results(path: str) -> dict[str, dict]:
@@ -156,6 +180,8 @@ def build() -> None:
                        "base": base[wid]["pred"], "ours": ours[wid]["pred"]})
 
     # Section 4: comparison rows
+    groups = {json.loads(l)["window_id"]: json.loads(l)["group"]
+              for l in (pp.REPO_ROOT / "data" / "datasets" / DATASET / "test" / "test.jsonl").read_text().splitlines()}
     models = []
     for path, display, group in ROWS:
         f = RESULTS / f"{path}-structured.summary.json"
@@ -166,32 +192,146 @@ def build() -> None:
         name = path.split("/")[-1]
         usd, cost_est = _cost_per_window(name, s)
         p50, p95, lat_est = _latency(name, s, rows)
-        models.append({"name": display, "group": group, "macro_f1": s["macro_f1"], "accuracy": s["accuracy"],
+        models.append({"name": display, "group": group, "macro_f1": s["macro_f1"], "macro_f1_ci": _f1_interval(rows, groups),
+                       "accuracy": s["accuracy"],
                        "alert_recall": s["alert_recall"], "false_alarm_rate": s["false_alarm_rate"],
                        "valid_json_rate": s["valid_json_rate"], "latency_p50_s": p50, "latency_p95_s": p95,
                        "latency_estimated": lat_est, "usd_per_window": usd, "cost_estimated": cost_est,
                        "usd_per_camera_month": usd * WINDOWS_PER_CAMERA_MONTH, "via": s.get("via", "")})
 
+    # Section 5: live demo clip (full-resolution keyframes for display) and the window the models receive
+    live_dir = OUT / "live"
+    shutil.rmtree(live_dir, ignore_errors=True); live_dir.mkdir(parents=True)
+    keys = sorted(LIVE_SEQUENCE.glob("k*.png"), key=lambda p: int(p.stem[1:]))
+    for i, k in enumerate(keys):
+        Image.open(k).convert("RGB").save(live_dir / f"k{i + 1}.jpg", quality=88)
+    _write_window(LIVE_WINDOW, _frames_from_test(LIVE_WINDOW))
+    live_label = ours[LIVE_WINDOW]["label"] if LIVE_WINDOW in ours else _results(f"{DATASET}/test/qwen4b-v2")[LIVE_WINDOW]["label"]
+    live = {"window_id": LIVE_WINDOW, "camera_id": "cam-B", "keyframes": len(keys), "label": live_label,
+            "models": [{"id": i, "name": n} for i, n, _ in LIVE_MODELS]}
+
     stats = {k: {m: _summary(f"{DATASET}/test/{k}")[m] for m in ("macro_f1", "accuracy", "alert_recall", "false_alarm_rate", "n")}
              for k in ("qwen4b-base", "qwen4b-v2")}
     data = {"fields": fields, "frame_spacing_s": pp.FRAME_SPACING_S, "frames_per_window": pp.FRAMES_PER_WINDOW,
             "teacher_model": "Gemini 3.8 Flash", "teacher": teacher_section, "sample": sample, "stats": stats,
-            "models": models, "windows_per_camera_month": WINDOWS_PER_CAMERA_MONTH, "opus_latency_source": OPUS_OR}
+            "models": models, "windows_per_camera_month": WINDOWS_PER_CAMERA_MONTH, "opus_latency_source": OPUS_OR,
+            "live": live, "bootstrap": BOOTSTRAP}
     (OUT / "data.json").write_text(json.dumps(data, indent=2))
     shutil.copy(Path(__file__).with_name("showcase.html"), OUT / "index.html")
     shutil.copytree(Path(__file__).with_name("showcase_assets"), OUT / "assets", dirs_exist_ok=True)
     print(f"built {OUT}: {len(teacher_section)} teacher windows, {len(sample)} sample windows, {len(models)} models")
 
 
-class _NoCache(http.server.SimpleHTTPRequestHandler):
+def _stream_model(model_id: str, kind: str, vllm_url: str | None, frames: list[bytes], t0: float, emit) -> None:
+    """Stream one model's answer, emitting {model, type: start|delta|done|error|offline, text, t} events."""
+    import os
+    import time
+    cfg = dict(ev.models_config()[model_id])
+    if kind == "vllm":
+        if not vllm_url:
+            return emit({"model": model_id, "type": "offline", "text": "GPU not connected", "t": 0})
+        cfg["base_url"] = vllm_url
+    body = ev.build_request(cfg, frames, "cam-B", "structured")
+    body["stream"] = True
+    headers = {"Authorization": f"Bearer {os.environ[cfg['api_key_env']]}"} if cfg.get("api_key_env") else {}
+    if kind == "vllm" and os.environ.get("AW_VLLM_KEY"):  # the Modal deployment requires its API key
+        headers = {"Authorization": f"Bearer {os.environ['AW_VLLM_KEY']}"}
+    emit({"model": model_id, "type": "start", "t": round(time.perf_counter() - t0, 3)})
+    text = ""
+    try:
+        with httpx.Client(timeout=httpx.Timeout(120, connect=5)) as client:
+            with client.stream("POST", cfg["base_url"].rstrip("/") + "/chat/completions", json=body, headers=headers) as r:
+                if r.status_code != 200:
+                    raise RuntimeError(f"HTTP {r.status_code}: {r.read()[:200]!r}")
+                for line in r.iter_lines():
+                    if not line.startswith("data:"):
+                        continue  # SSE comments (OpenRouter keep-alives) and blank lines
+                    payload = line[5:].strip()
+                    if payload == "[DONE]":
+                        break
+                    chunk = json.loads(payload)
+                    delta = ((chunk.get("choices") or [{}])[0].get("delta") or {}).get("content") or ""
+                    if delta:
+                        text += delta
+                        emit({"model": model_id, "type": "delta", "text": delta, "t": round(time.perf_counter() - t0, 3)})
+        emit({"model": model_id, "type": "done", "pred": ev.parse(text), "t": round(time.perf_counter() - t0, 3)})
+    except Exception as e:  # noqa: BLE001 - shown in the panel
+        offline = kind == "vllm" and isinstance(e, (httpx.ConnectError, httpx.ConnectTimeout))
+        emit({"model": model_id, "type": "offline" if offline else "error",
+              "text": "GPU not connected" if offline else f"{type(e).__name__}: {str(e)[:160]}",
+              "t": round(time.perf_counter() - t0, 3)})
+
+
+class _Handler(http.server.SimpleHTTPRequestHandler):
+    vllm_url: str | None = None
+
     def end_headers(self) -> None:  # always serve the latest build (a cached page once showed stale grading)
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
+    def _sse_start(self) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.end_headers()
 
-def serve(port: int) -> None:
-    handler = functools.partial(_NoCache, directory=str(OUT))
-    print(f"AisleWatch showcase: http://127.0.0.1:{port}")
+    def _send(self, ev_: dict) -> None:
+        self.wfile.write(f"data: {json.dumps(ev_)}\n\n".encode())
+        self.wfile.flush()
+
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/api/live":
+            return self.send_error(404)
+        import queue
+        import threading
+        import time
+        ev.load_env()
+        frames = _frames_from_test(LIVE_WINDOW)
+        q: queue.Queue = queue.Queue()
+        t0 = time.perf_counter()
+        threads = [threading.Thread(target=_stream_model, args=(m, kind, self.vllm_url, frames, t0, q.put), daemon=True)
+                   for m, _, kind in LIVE_MODELS]
+        for th in threads:
+            th.start()
+        self._sse_start()
+        events, finished = [], 0
+        while finished < len(threads):
+            e = q.get()
+            events.append(e)
+            finished += e["type"] in ("done", "error", "offline")
+            try:
+                self._send(e)
+            except (BrokenPipeError, ConnectionResetError):
+                break
+        # Record complete live runs (all three answered) so the demo can replay one if the venue network fails.
+        if all(any(e["model"] == m and e["type"] == "done" for e in events) for m, _, _ in LIVE_MODELS):
+            LIVE_RUNS.mkdir(parents=True, exist_ok=True)
+            (LIVE_RUNS / f"{time.strftime('%Y%m%d-%H%M%S')}.json").write_text(json.dumps(events))
+
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path == "/api/live/replay":
+            import time
+            runs = sorted(LIVE_RUNS.glob("*.json")) if LIVE_RUNS.exists() else []
+            if not runs:
+                return self.send_error(404, "no recorded live run yet")
+            self._sse_start()
+            self._send({"type": "replay", "recorded": runs[-1].stem})
+            start = time.perf_counter()
+            for e in json.loads(runs[-1].read_text()):
+                time.sleep(max(0.0, e.get("t", 0) - (time.perf_counter() - start)))
+                self._send(e)
+            return None
+        if self.path == "/api/live/status":
+            body = json.dumps({"vllm": bool(self.vllm_url), "replay_available": LIVE_RUNS.exists() and any(LIVE_RUNS.glob("*.json"))}).encode()
+            self.send_response(200); self.send_header("Content-Type", "application/json"); self.end_headers()
+            self.wfile.write(body)
+            return None
+        return super().do_GET()
+
+
+def serve(port: int, vllm_url: str | None) -> None:
+    _Handler.vllm_url = vllm_url
+    handler = functools.partial(_Handler, directory=str(OUT))
+    print(f"AisleWatch showcase: http://127.0.0.1:{port}  (Qwen live via {vllm_url or 'not connected'})")
     http.server.ThreadingHTTPServer(("127.0.0.1", port), handler).serve_forever()
 
 
@@ -200,8 +340,9 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("build")
     s = sub.add_parser("serve"); s.add_argument("--port", type=int, default=8790)
+    s.add_argument("--vllm-url", help="vLLM serving qwen4b-base and qwen4b-v2, e.g. http://localhost:8000/v1 through an SSH tunnel")
     a = ap.parse_args()
-    build() if a.cmd == "build" else serve(a.port)
+    build() if a.cmd == "build" else serve(a.port, a.vllm_url)
 
 
 if __name__ == "__main__":
