@@ -110,7 +110,7 @@ footer { border-top: 1px solid var(--rule); padding: 32px 0 56px; font-family: "
   letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
 /* live demo */
-.live-wrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.live-wrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 40px; align-items: center; }
 .live-screen { position: relative; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
 .live-screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .6s linear; }
 .live-screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: overlay; opacity: .35; pointer-events: none; }
@@ -118,19 +118,22 @@ footer { border-top: 1px solid var(--rule); padding: 32px 0 56px; font-family: "
   letter-spacing: .1em; display: flex; gap: 8px; align-items: center; text-shadow: 0 1px 2px #000; }
 .live-screen .rec::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #ff5a4f; animation: blink 1s steps(1) infinite; }
 .live-screen .clock { position: absolute; right: 14px; top: 12px; font-family: "Geist Mono", monospace; font-size: 12px; color: #fff; text-shadow: 0 1px 2px #000; }
-.live-actions { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
+.live-player { position: relative; }  /* the buttons hang below without counting, so the video itself centres on the lanes */
+.live-actions { display: flex; gap: 12px; align-items: center; position: absolute; top: calc(100% + 16px); left: 0; right: 0; }
 .btn { font-family: "Geist Mono", monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;
   background: var(--accent); color: var(--accent-ink); border: 0; padding: 12px 18px; border-radius: 2px; }
 .btn[disabled] { opacity: .4; cursor: default; }
 .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--rule); }
 .live-note { font-family: "Geist Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.lanes { display: grid; gap: 14px; }
+.lanes { display: grid; gap: 14px; container-type: inline-size; }
 .lane { border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; transition: border-color .3s, box-shadow .3s; }
 .lane.ok { border-color: color-mix(in srgb, var(--sub-ok) 60%, transparent); box-shadow: 0 0 28px -12px var(--sub-ok); }
 .lane.bad { border-color: color-mix(in srgb, var(--sub-bad) 60%, transparent); box-shadow: 0 0 28px -12px var(--sub-bad); }
 /* name, cost and timer share one line at the same size */
-.lane .head, .lanes-head { display: grid; grid-template-columns: minmax(0, 1fr) 5.6em 3.4em; gap: 24px; align-items: baseline;
-  font-size: clamp(22px, 2.4vw, 34px); }
+/* sized to the lanes' own width so name, cost and time always fit on one line */
+.lane .head, .lanes-head { display: grid; grid-template-columns: minmax(0, 1fr) 5.2em 3.2em; gap: 16px; align-items: baseline;
+  font-size: clamp(16px, 4.3cqi, 34px); }
+.lane .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lane .cost, .lane .timer { text-align: right; white-space: nowrap; }
 .lanes-head { padding: 0 19px; }
 .lanes-head span { font-family: "Geist Mono", monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: right; font-weight: 400; }
@@ -154,12 +157,11 @@ footer { border-top: 1px solid var(--rule); padding: 32px 0 56px; font-family: "
   .clips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .charts { grid-template-columns: 1fr; gap: 48px; }
   .live-wrap { grid-template-columns: 1fr; }
+  .live-actions { position: static; margin-top: 16px; }
   .act-head { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .lane .head, .lanes-head { grid-template-columns: 1fr 5.6em 3.4em; row-gap: 8px; }
-  .lane .name { grid-column: 1 / -1; }
-  .lane .cost { grid-column: 2; } .lane .timer { grid-column: 3; }
+
   .clips { grid-template-columns: 1fr; }
   .kpis { grid-template-columns: 1fr; gap: 24px; margin-top: 56px; }
   nav.top .links { display: none; }
@@ -209,7 +211,7 @@ footer { border-top: 1px solid var(--rule); padding: 32px 0 56px; font-family: "
     <div class="eyebrow">05 · Live</div>
     <div class="act-head"><h2 class="display">Benchmarking on a <em>new camera</em></h2></div>
     <div class="live-wrap">
-      <div>
+      <div class="live-player">
         <div class="live-screen" id="live-screen"><img alt=""><img alt=""><canvas width="320" height="180"></canvas>
           <span class="rec">Camera B · Live</span><span class="clock" id="live-clock"></span></div>
         <div class="live-actions"><button class="btn" id="live-run">Ask the models</button><button class="btn ghost" id="live-replay">Replay clip</button>
