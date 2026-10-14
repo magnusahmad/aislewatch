@@ -440,7 +440,7 @@ function live() {
   }
   $("#live-run").onclick = () => run("/api/live", "POST");
   fetch("/api/live/status", { cache: "no-store" }).then(r => r.json()).then(s => {
-    if (!s.vllm && s.replay_available) {
+    if (s.replay_available) {  // always offered when a recorded run exists: the fallback if the network fails mid-demo
       const b = document.createElement("button"); b.className = "btn ghost"; b.textContent = "Replay last live run";
       b.onclick = () => run("/api/live/replay", "GET"); $("#live-replay").after(b);
     }
