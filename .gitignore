@@ -1,5 +1,10 @@
 data/
-models/
+# Model weights stay local, except the published demo adapter. Git can't re-include a file inside an
+# ignored directory, so each level is re-opened explicitly rather than with a single !models/adapters/v2-4b/.
+models/*
+!models/adapters/
+models/adapters/*
+!models/adapters/v2-4b/
 .env
 .venv/
 __pycache__/
