@@ -53,7 +53,13 @@
       "usd_per_m_input": 0.75,
       "usd_per_m_output": 3.75,
       "checked": "2026-10-13",
-      "note": "OpenRouter list price, standard tier. Announced to double from 2027-01-01."
+      "note": "OpenRouter list price, standard tier. Announced to double from 2027-01-01. Reasoning is mandatory on this endpoint; set to minimal, which still uses ~380 reasoning tokens on 10-frame inputs, so max_tokens is raised to 2000 to let the JSON finish. Reasoning tokens are billed."
+    },
+    "extra_body": {
+      "reasoning": {
+        "effort": "minimal"
+      },
+      "max_tokens": 2000
     }
   },
   "gpt-6.1-sol": {
@@ -66,7 +72,12 @@
       "usd_per_m_input": 2.0,
       "usd_per_m_output": 10.0,
       "checked": "2026-10-13",
-      "note": "OpenRouter list price, standard tier."
+      "note": "OpenRouter list price, standard tier. Reasoning set to minimal (default reasoning truncated JSON at max_tokens=400; matches thinking-off Qwen)."
+    },
+    "extra_body": {
+      "reasoning": {
+        "effort": "minimal"
+      }
     }
   },
   "qwen-siliconflow": {
@@ -104,7 +115,12 @@
       "usd_per_m_input": 0.1,
       "usd_per_m_output": 0.15,
       "checked": "2026-10-13",
-      "note": "OpenRouter list price, standard tier. Base Qwen3.5-9B, hosted pay-per-token (no LoRA)."
+      "note": "OpenRouter list price, standard tier. Base Qwen3.5-9B, hosted pay-per-token (no LoRA). Thinking disabled via OpenRouter reasoning.enabled=false (default is on)."
+    },
+    "extra_body": {
+      "reasoning": {
+        "enabled": false
+      }
     }
   },
   "qwen4b-base": {

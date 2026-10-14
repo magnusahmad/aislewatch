@@ -66,9 +66,11 @@ WATCHDOG=$!
 log "watchdog armed: terminates $POD after $MAX_HOURS h (pid $WATCHDOG)"
 
 # 3. Wait for SSH (max 20 min).
-HOST=""
+HOST=""; KEY_CLEARED=""
 for _ in $(seq 1 60); do
   HOST=$(prime --plain pods status "$POD" 2>/dev/null | awk '/^SSH/ {print $2}' | grep '@' || true)
+  # Providers reuse IPs: drop any stale host key for this address or accept-new refuses to connect.
+  [ -n "$HOST" ] && { [ -n "$KEY_CLEARED" ] || { ssh-keygen -R "${HOST#*@}" >/dev/null 2>&1; KEY_CLEARED=1; }; }
   [ -n "$HOST" ] && ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "$HOST" true < /dev/null 2>/dev/null && break
   HOST=""; sleep 20
 done

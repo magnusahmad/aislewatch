@@ -92,7 +92,7 @@ uv run sft @ "$CFG" --output-dir "$HOME/runs" --run.name "$RUN" --clean > "$HOME
 SFT_PID=$!
 GUARD_OK=0
 while kill -0 "$SFT_PID" 2>/dev/null; do
-  TL=$(ls "$HOME/runs/$RUN/logs/"*/trainer.log 2>/dev/null | head -1)
+  TL=$(ls "$HOME/runs/$RUN/logs/"*/trainer.log 2>/dev/null | head -1 || true)   # absent until the trainer starts
   if [ "$GUARD_OK" = 0 ] && [ -n "$TL" ]; then
     VERDICT=$(python3 - "$TL" <<'PY'
 import math, re, sys
