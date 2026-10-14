@@ -61,8 +61,12 @@ for size in $SIZES; do
     bash pod/serve.sh --stop || fail "$size: stop vLLM"
   fi
 
-  status "$size: train"
-  bash pod/train.sh "$MODEL" "$DATASET" "$RUNDIR" "$EPOCHS" "$LR" || fail "$size: train (see ~/runs/$RUNDIR.log)"
+  if [ -s "$HOME/runs/$RUNDIR/adapter/adapter_model.safetensors" ]; then
+    status "$size: adapter exists, skipping training"   # pushed by run_remote.sh from models/adapters/
+  else
+    status "$size: train"
+    bash pod/train.sh "$MODEL" "$DATASET" "$RUNDIR" "$EPOCHS" "$LR" || fail "$size: train (see ~/runs/$RUNDIR.log)"
+  fi
 
   status "$size: serve adapter"
   bash pod/serve.sh "$MODEL" "$BASE" "$TUNED=$HOME/runs/$RUNDIR/adapter" || fail "$size: serve adapter"

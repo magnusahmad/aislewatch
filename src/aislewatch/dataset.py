@@ -4,6 +4,8 @@
 - Keyframe sequences -> windows over a timeline where each keyframe is held for a random 1-3 s,
   so the same sequence yields several windows with different timing.
 - Camera B is the held-out test camera and never enters train/val.
+- --val-camera holds a whole training-side camera out as validation (new-camera generalisation, like test);
+  scene-level validation groups are still drawn from the remaining cameras.
 - Labels come from the human review (label == "accepted", human_state); --include-unverified
   falls back to intended states for dry runs only.
 
@@ -123,10 +125,10 @@ def choose_val_groups(groups_by_state: dict[str, list[str]], val_frac: float) ->
     return chosen
 
 
-def _split(camera: str, group: str, val_groups: set[str]) -> str:
+def _split(camera: str, group: str, val_groups: set[str], val_cameras: frozenset[str] = frozenset()) -> str:
     if camera in TEST_CAMERAS:
         return "test"
-    return "val" if group in val_groups else "train"
+    return "val" if camera in val_cameras or group in val_groups else "train"
 
 
 def collect_stills(include_unverified: bool):
@@ -172,7 +174,9 @@ def collect_live_labels(include_fake: bool):
 
 
 def build(name: str, include_unverified: bool, seed: int, still_variants: dict, seq_variants: dict,
-          val_frac: float, include_live: bool = True, include_fake: bool = False) -> Path:
+          val_frac: float, include_live: bool = True, include_fake: bool = False,
+          val_cameras: frozenset[str] = frozenset()) -> Path:
+    assert not (val_cameras & TEST_CAMERAS), "a test camera can't be a validation camera"
     rng = random.Random(seed)
     out = pp.REPO_ROOT / "data" / "datasets" / name
     (out / "test").mkdir(parents=True, exist_ok=True)
@@ -197,17 +201,17 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
     seqs = list(collect_sequences(include_unverified))
     by_state: dict[str, list[str]] = {}
     for meta, img_path, state in stills:
-        if (meta.get("camera_id") or img_path.stem.split("_")[0]) not in TEST_CAMERAS:
+        if (meta.get("camera_id") or img_path.stem.split("_")[0]) not in TEST_CAMERAS | val_cameras:
             by_state.setdefault(state, []).append(f"still:{meta['id']}")
     for seq_dir, metas, _, states in seqs:
-        if metas[0]["camera_id"] not in TEST_CAMERAS:
+        if metas[0]["camera_id"] not in TEST_CAMERAS | val_cameras:
             by_state.setdefault("seq:" + states[-1], []).append(f"seq:{seq_dir.name}")
     val_groups = choose_val_groups(by_state, val_frac)
 
     for meta, img_path, state in stills:
         camera = meta.get("camera_id") or img_path.stem.split("_")[0]
         group = f"still:{meta['id']}"
-        split = _split(camera, group, val_groups)
+        split = _split(camera, group, val_groups, val_cameras)
         img = Image.open(img_path).convert("RGB")
         caption = still_caption(meta, state)
         for v in range(still_variants[split]):
@@ -218,7 +222,7 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
     for seq_dir, metas, imgs, states in seqs:
         camera = metas[0]["camera_id"]
         seq = seq_dir.name
-        split = _split(camera, f"seq:{seq}", val_groups)
+        split = _split(camera, f"seq:{seq}", val_groups, val_cameras)
         pil = [Image.open(p).convert("RGB") for p in imgs]
         for v in range(seq_variants[split]):
             timeline = [i for i in range(len(pil)) for _ in range(rng.randint(2, 6))]  # 1-3 s per keyframe
@@ -237,7 +241,7 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
 
     if include_live:
         for r, caption, frames in collect_live_labels(include_fake):
-            add("train", f"live-{r['window_id']}", r["camera_id"], frames, caption, f"loop:{r['source']}",
+            add("val" if r["camera_id"] in val_cameras else "train", f"live-{r['window_id']}", r["camera_id"], frames, caption, f"loop:{r['source']}",
                 f"live:{r['correction_id'] or r['window_id']}")
 
     for split in ("train", "val"):
@@ -248,7 +252,7 @@ def build(name: str, include_unverified: bool, seed: int, still_variants: dict, 
         for r in rows["test"]:
             f.write(json.dumps(r) + "\n")
     manifest = {"val_groups": sorted(val_groups), "name": name, "seed": seed, "include_unverified": include_unverified,
-                "long_side_px": pp.LONG_SIDE_PX, "test_cameras": sorted(TEST_CAMERAS),
+                "long_side_px": pp.LONG_SIDE_PX, "test_cameras": sorted(TEST_CAMERAS), "val_cameras": sorted(val_cameras),
                 "counts": {s: dict(c) for s, c in counts.items()},
                 "totals": {s: sum(c.values()) for s, c in counts.items()}}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
@@ -262,11 +266,12 @@ def main() -> None:
     ap.add_argument("--include-unverified", action="store_true")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--val-frac", type=float, default=0.15)
+    ap.add_argument("--val-camera", action="append", default=[], help="hold out this whole camera as validation (repeatable)")
     ap.add_argument("--no-live", action="store_true", help="exclude correction-loop labels")
     args = ap.parse_args()
     build(args.name, args.include_unverified, args.seed,
           still_variants={"train": 6, "val": 3, "test": 3}, seq_variants={"train": 4, "val": 3, "test": 4},
-          val_frac=args.val_frac, include_live=not args.no_live)
+          val_frac=args.val_frac, include_live=not args.no_live, val_cameras=frozenset(args.val_camera))
 
 
 if __name__ == "__main__":

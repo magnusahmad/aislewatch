@@ -1,0 +1,129 @@
+{
+  "templates": {
+    "same-hall": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nReference image (style and setting only, not an edit target): the attached CCTV still of the same data hall.\nGenerate: {scene} The containment doors are sliding doors that move sideways along a top track; never show hinged or swinging doors. Doors fully closed.\nMatch the reference's camera quality: slightly soft, compressed, mildly desaturated surveillance footage with wide-angle distortion, and a small timestamp overlay in the top-left corner like the reference.\nPeople: none.\nAvoid: cinematic lighting, sharp detail, objects in the doorway, copying the reference's layout.\nOutput: one 1280x720 image. Copy it to {out_path} and print that path.",
+    "new-hall": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nReference image (camera quality only, not the setting and not an edit target): the attached CCTV still from another facility.\nGenerate: {scene} The containment doors are sliding doors that move sideways along a top track; never show hinged or swinging doors. Doors fully closed.\nMatch only the reference's surveillance-camera quality: slightly soft, compressed footage and a small timestamp overlay in the top-left corner. The room, racks, colours, lighting and door frame must be different from the reference, as described.\nPeople: none.\nAvoid: cinematic lighting, sharp detail, objects in the doorway, copying the reference's layout.\nOutput: one 1280x720 image. Copy it to {out_path} and print that path.",
+    "ir": "Use the built-in image_gen tool (imagegen skill, built-in mode only; do not use the CLI fallback or any API key).\nReference image (camera quality only, not the setting and not an edit target): the attached CCTV still from another facility.\nGenerate: {scene} The containment doors are sliding doors that move sideways along a top track; never show hinged or swinging doors. Doors fully closed.\nThis camera is in night infrared mode: a monochrome greyscale image with no colour at all, slightly grainy, with the typical IR look (bright reflective surfaces, dark corners, small bright status LEDs). Small timestamp overlay in the top-left corner.\nPeople: none.\nAvoid: cinematic lighting, sharp detail, objects in the doorway, copying the reference's layout.\nOutput: one 1280x720 image. Copy it to {out_path} and print that path."
+  },
+  "jobs": [
+    {
+      "id": "cam-D_closed-a",
+      "template": "same-hall",
+      "camera_id": "cam-D",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a camera in the same data hall mounted low, about 1.5 m high, on a pillar in the corridor, facing the cold-aisle containment entrance straight-on from about 3 m away, so the pair of transparent sliding doors in their grey aluminium frame fills about half the frame width. The door sign is readable on the frame above the doors; racks visible through the glass; perforated grey raised-floor tiles in the foreground.",
+      "note": "base candidate a"
+    },
+    {
+      "id": "cam-D_closed-b",
+      "template": "same-hall",
+      "camera_id": "cam-D",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a camera in the same data hall mounted low, about 1.5 m high, on a pillar in the corridor, facing the cold-aisle containment entrance straight-on from about 3 m away, so the pair of transparent sliding doors in their grey aluminium frame fills about half the frame width. The door sign is readable on the frame above the doors; racks visible through the glass; perforated grey raised-floor tiles in the foreground.",
+      "note": "base candidate b"
+    },
+    {
+      "id": "cam-E_closed-a",
+      "template": "new-hall",
+      "camera_id": "cam-E",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still in a different, newer data hall: white server racks with blue status LEDs, very bright cool-white LED strip lighting, glossy light-grey floor. The camera is mounted high in a corner looking diagonally at the cold-aisle containment entrance: a pair of transparent sliding doors in a blue-painted steel frame, with a white sign above reading 'COLD AISLE 07'.",
+      "note": "base candidate a"
+    },
+    {
+      "id": "cam-E_closed-b",
+      "template": "new-hall",
+      "camera_id": "cam-E",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still in a different, newer data hall: white server racks with blue status LEDs, very bright cool-white LED strip lighting, glossy light-grey floor. The camera is mounted high in a corner looking diagonally at the cold-aisle containment entrance: a pair of transparent sliding doors in a blue-painted steel frame, with a white sign above reading 'COLD AISLE 07'.",
+      "note": "base candidate b"
+    },
+    {
+      "id": "cam-F_closed-a",
+      "template": "new-hall",
+      "camera_id": "cam-F",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a ceiling-mounted fisheye dome camera looking almost straight down at the entrance of a cold-aisle containment in a data hall, with strong circular fisheye distortion and dark vignetted edges. The pair of transparent sliding doors and their floor track are seen from above, with the tops of black racks on either side and a corridor of grey floor tiles.",
+      "note": "base candidate a"
+    },
+    {
+      "id": "cam-F_closed-b",
+      "template": "new-hall",
+      "camera_id": "cam-F",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a ceiling-mounted fisheye dome camera looking almost straight down at the entrance of a cold-aisle containment in a data hall, with strong circular fisheye distortion and dark vignetted edges. The pair of transparent sliding doors and their floor track are seen from above, with the tops of black racks on either side and a corridor of grey floor tiles.",
+      "note": "base candidate b"
+    },
+    {
+      "id": "cam-G_closed-a",
+      "template": "ir",
+      "camera_id": "cam-G",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still at night from a camera mounted high on the corridor wall, looking at an angle at the entrance of a cold-aisle containment: a pair of transparent sliding doors in a metal frame between rows of server racks. The hall lights are off except for rack status LEDs and an exit sign.",
+      "note": "base candidate a"
+    },
+    {
+      "id": "cam-G_closed-b",
+      "template": "ir",
+      "camera_id": "cam-G",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still at night from a camera mounted high on the corridor wall, looking at an angle at the entrance of a cold-aisle containment: a pair of transparent sliding doors in a metal frame between rows of server racks. The hall lights are off except for rack status LEDs and an exit sign.",
+      "note": "base candidate b"
+    },
+    {
+      "id": "cam-H_closed-a",
+      "template": "new-hall",
+      "camera_id": "cam-H",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still in an older data centre: beige and grey racks, warm yellowish fluorescent tube lighting, worn speckled vinyl floor, cable trays overhead. The camera is mounted high above a corridor looking at the cold-aisle containment entrance: a pair of frosted, semi-opaque sliding doors in a dark grey frame, with a red-and-white sign reading 'KEEP CLOSED - AIRFLOW' on the left panel.",
+      "note": "base candidate a"
+    },
+    {
+      "id": "cam-H_closed-b",
+      "template": "new-hall",
+      "camera_id": "cam-H",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-A_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still in an older data centre: beige and grey racks, warm yellowish fluorescent tube lighting, worn speckled vinyl floor, cable trays overhead. The camera is mounted high above a corridor looking at the cold-aisle containment entrance: a pair of frosted, semi-opaque sliding doors in a dark grey frame, with a red-and-white sign reading 'KEEP CLOSED - AIRFLOW' on the left panel.",
+      "note": "base candidate b"
+    },
+    {
+      "id": "cam-I_closed-a",
+      "template": "new-hall",
+      "camera_id": "cam-I",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a camera at the end of a long data-hall corridor, looking down the corridor's length. Far away at the end of the corridor, small in the frame (about 15% of the image width), is the cold-aisle containment entrance: a pair of transparent sliding doors in a grey frame. Long rows of dark racks along both sides, grey floor tiles, evenly spaced ceiling lights.",
+      "note": "base candidate a"
+    },
+    {
+      "id": "cam-I_closed-b",
+      "template": "new-hall",
+      "camera_id": "cam-I",
+      "out_dir": "data/gen/bases-candidates",
+      "base_image": "data/gen/bases/cam-C_closed.png",
+      "intended_state": "closed",
+      "scene": "a CCTV still from a camera at the end of a long data-hall corridor, looking down the corridor's length. Far away at the end of the corridor, small in the frame (about 15% of the image width), is the cold-aisle containment entrance: a pair of transparent sliding doors in a grey frame. Long rows of dark racks along both sides, grey floor tiles, evenly spaced ceiling lights.",
+      "note": "base candidate b"
+    }
+  ]
+}

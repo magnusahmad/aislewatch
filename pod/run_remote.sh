@@ -27,6 +27,10 @@ rsync -az --delete --exclude '.venv' --exclude 'data' --exclude 'models' --exclu
 "${SSH[@]}" "mkdir -p aislewatch/data/datasets aislewatch/data/results" < /dev/null || exit 1
 rsync -az "$REPO/data/datasets/$DATASET" "$HOST:aislewatch/data/datasets/" || exit 1
 [ -d "$REPO/data/results/$DATASET" ] && rsync -az "$REPO/data/results/$DATASET" "$HOST:aislewatch/data/results/"
+for size in $SIZES; do   # reuse adapters already trained (pipeline.sh then skips training for that size)
+  [ -s "$REPO/models/adapters/$RUN-$size/adapter_model.safetensors" ] && \
+    { "${SSH[@]}" "mkdir -p runs/$RUN-$size/adapter" < /dev/null && rsync -az "$REPO/models/adapters/$RUN-$size/" "$HOST:runs/$RUN-$size/adapter/"; }
+done
 
 log "start pipeline (sizes: $SIZES)"
 "${SSH[@]}" "cd aislewatch && nohup bash pod/pipeline.sh $DATASET $RUN '$SIZES' $EPOCHS $LR > ~/pipeline.log 2>&1 < /dev/null &" < /dev/null || exit 1

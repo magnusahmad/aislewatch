@@ -121,7 +121,7 @@ uv run python - "$TRAINER_LOG" "$HOME/runs/$RUN/adapter" "$HOME/runs/$RUN.train_
 import json, re, sys, os
 log, adapter, report_path, steps = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
 text = open(log, errors="ignore").read()
-targets = re.search(r"Found (\d+) target modules", text)
+targets = re.search(r"Found (\d+) target modules", text) or re.search(r"LoRA enabled: ([\d,]+) adapter params", text)
 losses = [float(x) for x in re.findall(r"Step \d+ \|[^|]*\| Loss ([0-9.]+)", text)]
 peak = re.findall(r"Peak Mem\. ([0-9.]+)/([0-9.]+) GiB", text)
 from safetensors import safe_open
@@ -132,7 +132,7 @@ if size:
         n_tensors = len(list(f.keys()))
 k = max(1, len(losses) // 10)
 first, last = (sum(losses[:k]) / k, sum(losses[-k:]) / k) if losses else (None, None)
-report = {"target_modules": int(targets.group(1)) if targets else None, "steps_logged": len(losses), "steps_expected": steps,
+report = {"target_modules": int(targets.group(1).replace(",", "")) if targets else None,  # module count, or adapter param count on newer prime-rl "steps_logged": len(losses), "steps_expected": steps,
           "loss_first": first, "loss_last": last, "peak_mem_gib": peak[-1] if peak else None,
           "adapter_bytes": size, "adapter_tensors": n_tensors}
 problems = []
