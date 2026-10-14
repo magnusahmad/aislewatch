@@ -34,14 +34,14 @@ DATASET = "v2"  # its test split is v1's, byte for byte
 WINDOWS_PER_CAMERA_MONTH = 30 * 24 * 3600 / pp.WINDOW_S  # continuous: one 5 s window after another
 TEACHER = "gemini-3.8-flash"
 
-# Section 2/3 sample, chosen from the per-window results (see build log): five where the base model is wrong and
-# AisleWatch right (one per error type), two where both are right, one AisleWatch miss.
-SAMPLE = ["B-seq-prop-box-leave-t2-w1", "B-seq-drift-ajar-t3-w1", "B-prop-cart-s0", "B-seq-prop-box-leave-t0-w0",
-          "B-seq-close-up-t1-w1", "B-seq-pass-in-t1-w0", "cam-B_closed-s0", "B-ajar-phone-s0"]
+# Section 2/3 sample: sequence windows with the most visible motion (2-3 keyframe changes in 5 s; stills and
+# held keyframes look frozen), chosen from the per-window results: four where the base model is wrong and
+# AisleWatch right, one where both are right, one AisleWatch miss.
+SAMPLE = ["B-seq-cart-through-t0-w1", "B-seq-walk-past-propped-t2-w0", "B-seq-prop-box-leave-t2-w0",
+          "B-seq-close-up-t3-w0", "B-seq-two-pass-t0-w1", "B-seq-walk-past-ajar-t3-w0"]
 
-# Section 1: training windows from six different rooms/cameras, one per (camera, state).
-TEACHER_PICKS = [("cam-A", "propped", "sequence"), ("cam-D", "passing", "sequence"), ("cam-F", "ajar", "still"),
-                 ("cam-G", "propped", "still"), ("cam-H", "closed", "sequence"), ("cam-I", "passing", "sequence")]
+# Section 1: one training sequence per camera, the one with the most visible motion.
+TEACHER_CAMERAS = ["cam-A", "cam-D", "cam-F", "cam-G", "cam-H", "cam-I"]
 
 # Rows for the comparison charts: (results file, display name, group). group "ours" is highlighted.
 ROWS = [("v2/test/qwen4b-v2", "AisleWatch (Qwen3.5-4B + LoRA)", "ours"),
@@ -66,6 +66,13 @@ def _frames_from_test(window_id: str) -> list[bytes]:
 def _frames_from_messages(messages: list[dict]) -> list[bytes]:
     urls = [p["image_url"]["url"] for p in messages[1]["content"] if p.get("image_url")]
     return [base64.b64decode(u.split(",", 1)[1]) for u in urls]
+
+
+def _motion(frames: list[bytes]) -> int:
+    """Keyframe changes visible in a window (mean grey-level step > 4 on a 128x72 thumbnail)."""
+    import numpy as np
+    g = [np.asarray(Image.open(io.BytesIO(f)).convert("L").resize((128, 72)), dtype=float) for f in frames]
+    return sum(float(np.abs(g[i] - g[i - 1]).mean()) > 4 for i in range(1, len(g)))
 
 
 def _write_window(window_id: str, frames: list[bytes]) -> None:
@@ -129,11 +136,9 @@ def build() -> None:
     # Section 1: teacher on training windows
     train = pq.read_table(pp.REPO_ROOT / "data" / "datasets" / DATASET / "train.parquet").to_pylist()
     picks = []
-    for cam, state, source in TEACHER_PICKS:
-        match = [r for r in train if r["camera_id"] == cam and r["door_state"] == state and r["source"] == source]
-        if not match:
-            raise SystemExit(f"no training window for {cam} {state} {source}; change TEACHER_PICKS")
-        r = next((r for r in match if r["window_id"].endswith(("-s0", "-w0", "-w1"))), match[0])
+    for cam in TEACHER_CAMERAS:
+        seqs = [r for r in train if r["camera_id"] == cam and r["source"] == "sequence"]
+        r = max(seqs, key=lambda r: (_motion(_frames_from_messages(r["messages"])), r["window_id"]))
         frames = _frames_from_messages(r["messages"])
         _write_window(r["window_id"], frames)
         label = json.loads(r["messages"][-1]["content"][0]["text"]) if isinstance(r["messages"][-1]["content"], list) \
@@ -174,11 +179,18 @@ def build() -> None:
             "models": models, "windows_per_camera_month": WINDOWS_PER_CAMERA_MONTH, "opus_latency_source": OPUS_OR}
     (OUT / "data.json").write_text(json.dumps(data, indent=2))
     shutil.copy(Path(__file__).with_name("showcase.html"), OUT / "index.html")
+    shutil.copytree(Path(__file__).with_name("showcase_assets"), OUT / "assets", dirs_exist_ok=True)
     print(f"built {OUT}: {len(teacher_section)} teacher windows, {len(sample)} sample windows, {len(models)} models")
 
 
+class _NoCache(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self) -> None:  # always serve the latest build (a cached page once showed stale grading)
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+
 def serve(port: int) -> None:
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(OUT))
+    handler = functools.partial(_NoCache, directory=str(OUT))
     print(f"AisleWatch showcase: http://127.0.0.1:{port}")
     http.server.ThreadingHTTPServer(("127.0.0.1", port), handler).serve_forever()
 
