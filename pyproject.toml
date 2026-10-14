@@ -24,6 +24,7 @@ aw-agreement = "aislewatch.evaluate:agreement"
 aw-live = "aislewatch.live.run:main"
 aw-mcp = "aislewatch.live.mcp_server:main"
 aw-dashboard = "aislewatch.live.dashboard:main"
+aw-showcase = "aislewatch.showcase:main"
 aw = "aislewatch.cli:main"
 
 [build-system]

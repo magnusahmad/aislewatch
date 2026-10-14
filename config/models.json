@@ -72,7 +72,7 @@
       "usd_per_m_input": 2.0,
       "usd_per_m_output": 10.0,
       "checked": "2026-10-13",
-      "note": "OpenRouter list price, standard tier. Reasoning set to minimal (default reasoning truncated JSON at max_tokens=400; matches thinking-off Qwen)."
+      "note": "OpenRouter list price, standard tier. Reasoning set to minimal (default reasoning truncated JSON at max_tokens=400; matches thinking-off Qwen). Cost shown on the showcase is estimated from this list price."
     },
     "extra_body": {
       "reasoning": {
@@ -211,6 +211,24 @@
       "usd_per_gpu_hour": 0.82,
       "checked": "2026-10-12",
       "note": "L40S 48GB, Prime Intellect (Massed Compute)"
+    }
+  },
+  "claude-opus-5.5": {
+    "kind": "claude-cli",
+    "provider": "openrouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "claude-opus-5-5",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "extra_body": {
+      "reasoning": {
+        "enabled": false
+      }
+    },
+    "price": {
+      "usd_per_m_input": 4.0,
+      "usd_per_m_output": 20.0,
+      "checked": "2026-10-14",
+      "note": "OpenRouter list price (anthropic/claude-opus-5.5), used to ESTIMATE cost; evaluated through the Claude Code subscription (claude -p), so latency includes CLI overhead."
     }
   }
 }

@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AisleWatch Showcase</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f2f1ed;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --accent: #2a78d6; --accent-ink: #1c5cab; --accent-soft: rgba(42,120,214,0.10);
+  --bar-other: #c3c2b7;
+  --good: #0ca30c; --good-ink: #006300; --good-soft: rgba(12,163,12,0.10);
+  --bad: #d03b3b; --bad-ink: #b42f2f; --bad-soft: rgba(208,59,59,0.10);
+  --screen: #0d0d0d;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+  --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --accent: #3987e5; --accent-ink: #86b6ef; --accent-soft: rgba(57,135,229,0.16);
+  --bar-other: #4a4945;
+  --good: #0ca30c; --good-ink: #3fcf3f; --good-soft: rgba(12,163,12,0.16);
+  --bad: #d03b3b; --bad-ink: #ff7b7b; --bad-soft: rgba(208,59,59,0.18);
+  --screen: #000000;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.5 ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--ring); }
+header.top .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
+.brand { font-weight: 700; letter-spacing: -0.01em; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+nav a { color: var(--ink-2); text-decoration: none; font-size: 13px; margin-right: 14px; }
+nav a:hover { color: var(--ink); }
+.spacer { flex: 1; }
+button.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--ring); border-radius: 8px;
+  padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+button.ghost:hover { color: var(--ink); border-color: var(--axis); }
+
+.hero { padding: 56px 0 32px; }
+.hero h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 12px; max-width: 900px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p.lede { color: var(--ink-2); font-size: 18px; max-width: 760px; margin: 0 0 28px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 18px 20px; }
+.kpi .k { color: var(--ink-2); font-size: 13px; }
+.kpi .v { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 4px 0; font-variant-numeric: tabular-nums; }
+.kpi .vs { color: var(--muted); font-size: 13px; }
+.kpi .vs b { color: var(--ink-2); font-weight: 600; }
+.note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+section.act { padding: 48px 0 24px; border-top: 1px solid var(--ring); }
+.act-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+.step { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 999px; padding: 2px 10px; }
+.act h2 { font-size: 28px; letter-spacing: -0.015em; margin: 0; }
+.act p.sub { color: var(--ink-2); margin: 4px 0 22px; max-width: 820px; }
+.controls { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.grid.three { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden;
+  display: flex; flex-direction: column; transition: box-shadow .4s, border-color .4s; }
+.card.win-good { border-color: color-mix(in srgb, var(--good) 55%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--good) 35%, transparent), 0 0 24px -8px var(--good); }
+.card.win-bad { border-color: color-mix(in srgb, var(--bad) 55%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--bad) 35%, transparent), 0 0 24px -8px var(--bad); }
+.screen { position: relative; background: var(--screen); aspect-ratio: 16 / 9; }
+.screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.screen .chip, .screen .fr, .screen .rec { position: absolute; font: 600 11px/1 ui-monospace, Menlo, monospace;
+  color: #fff; background: rgba(0,0,0,.55); padding: 4px 6px; border-radius: 4px; }
+.screen .chip { left: 8px; bottom: 8px; }
+.screen .fr { right: 8px; bottom: 8px; }
+.screen .rec { right: 8px; top: 8px; display: flex; gap: 5px; align-items: center; }
+.screen .rec i { width: 7px; height: 7px; border-radius: 50%; background: #e34948; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.screen .bar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); transition: width .5s linear; }
+.fields { padding: 10px 12px 4px; display: grid; gap: 3px; min-height: 196px; }
+.f { display: grid; grid-template-columns: 158px minmax(0, 1fr) 18px; gap: 8px; align-items: baseline;
+  font-size: 12.5px; opacity: 0; transform: translateY(4px); transition: opacity .25s, transform .25s; }
+.f.on { opacity: 1; transform: none; }
+.f dt { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+.f dd { margin: 0; font-family: ui-monospace, Menlo, monospace; color: var(--ink); overflow-wrap: anywhere; }
+.f .m { font-weight: 700; text-align: center; font-size: 12px; }
+.f.ok dd { color: var(--good-ink); } .f.ok .m { color: var(--good-ink); }
+.f.no dd { color: var(--bad-ink); } .f.no .m { color: var(--bad-ink); }
+.f.no dd s { color: var(--muted); text-decoration-thickness: 1px; margin-left: 6px; }
+.f.cap { grid-template-columns: 1fr; }
+.f.cap dd { font-family: inherit; color: var(--ink-2); font-size: 12.5px; font-style: italic; min-height: 2.9em; }
+.verdict { margin: 6px 12px 12px; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 600;
+  display: flex; gap: 8px; align-items: center; opacity: 0; transition: opacity .3s; background: var(--surface-2); color: var(--ink-2); }
+.verdict.on { opacity: 1; }
+.verdict.good { background: var(--good-soft); color: var(--good-ink); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad-ink); }
+.verdict.info { background: var(--accent-soft); color: var(--accent-ink); }
+.verdict .ic { font-size: 15px; }
+
+.panel { position: sticky; top: 72px; background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 18px; }
+.panel h3 { margin: 0 0 2px; font-size: 15px; }
+.panel .src { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+.stat { padding: 10px 0; border-top: 1px solid var(--ring); }
+.stat:first-of-type { border-top: 0; }
+.stat .lab { color: var(--ink-2); font-size: 13px; }
+.stat .val { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.stat .delta { font-size: 12.5px; font-weight: 600; margin-left: 6px; }
+.stat .delta.up { color: var(--good-ink); } .stat .delta.down { color: var(--bad-ink); }
+.stat .help { color: var(--muted); font-size: 12px; }
+.tally { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13px; color: var(--ink-2); }
+.tally b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.chart { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 16px 16px 10px; position: relative; }
+.chart h3 { margin: 0; font-size: 16px; }
+.chart .sub { color: var(--muted); font-size: 12.5px; margin: 2px 0 10px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart svg text { fill: var(--ink-2); font-size: 11.5px; }
+.chart svg .name { fill: var(--ink-2); font-size: 12px; }
+.chart svg .name.ours { fill: var(--ink); font-weight: 700; }
+.chart svg .val { fill: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums; }
+.chart svg .val.ours { font-weight: 700; }
+.chart svg .tick { fill: var(--muted); font-size: 10.5px; }
+.chart svg .gridline { stroke: var(--grid); stroke-width: 1; }
+.chart svg .baseline { stroke: var(--axis); stroke-width: 1; }
+.chart svg rect.b { transition: width .9s cubic-bezier(.2,.8,.2,1); }
+.chart svg rect.hit { fill: transparent; cursor: default; }
+.chart svg .crown { fill: var(--accent); font-weight: 700; font-size: 11px; letter-spacing: 0.06em; }
+.tip { position: fixed; z-index: 30; pointer-events: none; background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--ring); border-radius: 10px; padding: 9px 11px; font-size: 12.5px; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  opacity: 0; transition: opacity .12s; max-width: 280px; }
+.tip.on { opacity: 1; }
+.tip .t { font-weight: 700; margin-bottom: 4px; }
+.tip .r { display: flex; justify-content: space-between; gap: 14px; color: var(--ink-2); }
+.tip .r b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 16px; color: var(--ink-2); font-size: 13px; margin: 0 0 12px; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+details.table { margin-top: 14px; }
+details.table summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--ring); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--ink-2); font-weight: 600; }
+tr.ours td { font-weight: 700; }
+.foot { color: var(--muted); font-size: 12.5px; margin: 18px 0 0; max-width: 980px; }
+.foot li { margin: 3px 0; }
+footer { padding: 36px 0 60px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--ring); margin-top: 32px; }
+
+@media (max-width: 1020px) {
+  .layout { grid-template-columns: 1fr; }
+  .panel { position: static; }
+  .charts { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: 1fr; }
+  nav { display: none; }
+  .f { grid-template-columns: 130px minmax(0, 1fr) 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .f, .verdict, .chart svg rect.b, .card { transition: none; }
+  .screen .rec i { animation: none; }
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand"><span class="dot"></span>AisleWatch</div>
+  <nav><a href="#teacher">1 · Labelling</a><a href="#before">2 · Before</a><a href="#after">3 · After</a><a href="#compare">4 · Comparison</a></nav>
+  <div class="spacer"></div>
+  <button class="ghost" id="theme">Light mode</button>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>A 4B vision model that watches containment doors <em>better than frontier APIs</em>, at a fraction of the cost.</h1>
+    <p class="lede">Every 5 seconds, ten CCTV frames go in and a structured caption comes out: is the cold-aisle door closed, ajar, propped open, or is someone passing through? Below: how the labels were made, the untrained model, the trained one, and how it compares.</p>
+    <div class="kpis" id="kpis"></div>
+    <div class="note">Scores are on camera B, which no model trained on: 114 windows from 18 scenes. All footage on this page is simulated.</div>
+  </section>
+
+  <section class="act" id="teacher">
+    <div class="act-head"><span class="step">Step 1</span><h2>A frontier model labels the training data</h2></div>
+    <p class="sub"><span data-teacher-name>Gemini 3.8 Flash</span> watches each 5-second window from the training cameras (six of the seven rooms are shown) and writes the caption field by field. A person reviews every label before it's used for training.</p>
+    <div class="controls"><button class="ghost" data-toggle="teacher">Pause</button><span>Playing at real speed: 2 frames per second</span></div>
+    <div class="grid three" id="grid-teacher"></div>
+  </section>
+
+  <section class="act" id="before">
+    <div class="act-head"><span class="step">Step 2</span><h2>Before: Qwen3.5-4B out of the box</h2></div>
+    <p class="sub">The same open model with no training, on camera B. It never trained on this camera. Each field is graded against the human label: <b style="color:var(--good-ink)">✓ right</b>, <b style="color:var(--bad-ink)">✗ wrong</b>, with the correct value struck alongside.</p>
+    <div class="controls"><button class="ghost" data-toggle="before">Pause</button><span>Same 8 windows in steps 2 and 3: five types of error, two easy cases, and one that both models miss.</span></div>
+    <div class="layout"><div class="grid" id="grid-before"></div><aside class="panel" id="panel-before"></aside></div>
+  </section>
+
+  <section class="act" id="after">
+    <div class="act-head"><span class="step">Step 3</span><h2>After: AisleWatch, fine-tuned on the reviewed labels</h2></div>
+    <p class="sub">The same 4B model with a LoRA adapter trained on 713 labelled windows from seven rooms, in one epoch on one GPU (65 minutes, $0.99). Same windows, same grading.</p>
+    <div class="controls"><button class="ghost" data-toggle="after">Pause</button><span>Camera B was held out of training throughout.</span></div>
+    <div class="layout"><div class="grid" id="grid-after"></div><aside class="panel" id="panel-after"></aside></div>
+  </section>
+
+  <section class="act" id="compare">
+    <div class="act-head"><span class="step">Step 4</span><h2>Accuracy, cost and speed against frontier models</h2></div>
+    <p class="sub">All models get the same 114 camera-B windows and the same prompt. Cost assumes continuous monitoring: one 5-second window after another, 518,400 windows per camera per month.</p>
+    <div class="legend"><span><i style="background:var(--accent)"></i>AisleWatch</span><span><i style="background:var(--bar-other)"></i>Other models</span><span>† estimated (see notes)</span></div>
+    <div class="charts" id="charts"></div>
+    <details class="table"><summary>Show as a table</summary><div id="table"></div></details>
+    <ul class="foot" id="foot"></ul>
+  </section>
+</main>
+<footer><div class="wrap">AisleWatch · simulated data-centre footage · numbers from <span class="mono">data/results/</span> · built by <span class="mono">aw-showcase build</span></div></footer>
+<div class="tip" id="tip"></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = x => (x * 100).toFixed(0) + "%";
+const money = x => x >= 1000 ? "$" + Math.round(x).toLocaleString("en-US") : "$" + (x >= 100 ? x.toFixed(0) : x.toFixed(x >= 10 ? 0 : 2));
+const SHORT = { door_state: "door_state", door_opening: "door_opening", state_changed_in_window: "state_changed",
+  people_visible: "people_visible", person_in_doorway_at_end: "person_in_doorway", object_in_doorway: "object_in_doorway", caption: "caption" };
+
+// ---------- theme -------------------------------------------------------------------------
+(function theme() {
+  const root = document.documentElement, btn = $("#theme");
+  let t = "dark"; try { t = localStorage.getItem("aw-theme") || "dark"; } catch (e) {}
+  const apply = () => { root.dataset.theme = t; btn.textContent = t === "dark" ? "Light mode" : "Dark mode"; };
+  btn.onclick = () => { t = t === "dark" ? "light" : "dark"; try { localStorage.setItem("aw-theme", t); } catch (e) {} apply(); };
+  apply();
+})();
+
+// ---------- window player -----------------------------------------------------------------
+// One tick = one frame (0.5 s, the real frame spacing). Fields appear one per tick from tick 1, the verdict
+// after the last field, then the final frame holds before the loop restarts.
+const HOLD = 6;
+function cardHTML(w, mode) {
+  return `<div class="card" data-id="${esc(w.window_id)}">
+    <div class="screen"><img alt="CCTV window ${esc(w.window_id)}" src="frames/${esc(w.window_id)}/f00.jpg">
+      <span class="rec"><i></i>${esc(w.camera_id.toUpperCase())}</span><span class="chip">t+0.0 s</span><span class="fr">1/10</span><span class="bar" style="width:0"></span></div>
+    <dl class="fields"></dl><div class="verdict"></div></div>`;
+}
+function gradeField(k, pred, label) {
+  if (k === "caption" || !label) return null;
+  return pred != null && pred[k] !== undefined && String(pred[k]) === String(label[k]);
+}
+function fieldRow(k, pred, label, graded) {
+  const v = pred ? pred[k] : undefined;
+  const g = graded ? gradeField(k, pred, label) : null;
+  const cls = k === "caption" ? "f cap" : "f" + (g === true ? " ok" : g === false ? " no" : "");
+  const shown = v === undefined ? "—" : String(v);
+  const right = g === false && label ? ` <s>${esc(label[k])}</s>` : "";
+  if (k === "caption") return `<div class="${cls}" data-k="${k}"><dd data-full="${esc(shown)}"></dd></div>`;
+  return `<div class="${cls}" data-k="${k}"><dt>${SHORT[k]}</dt><dd>${esc(shown)}${right}</dd><span class="m">${g === true ? "✓" : g === false ? "✗" : ""}</span></div>`;
+}
+function verdict(mode, w, pred) {
+  const truth = w.label.door_state, said = pred ? pred.door_state : "no answer";
+  if (mode === "teacher") {
+    return said === truth ? ["info", "✓", `Teacher: <b>${esc(said)}</b> · reviewer accepted`]
+                          : ["bad", "✎", `Teacher said <b>${esc(said)}</b>; reviewer corrected it to <b>${esc(truth)}</b>`];
+  }
+  return said === truth ? ["good", "✓", `Door state right: <b>${esc(truth)}</b>`]
+                        : ["bad", "✗", `Said <b>${esc(said)}</b>, truth is <b>${esc(truth)}</b>`];
+}
+
+function makeSection(key, windows, mode, predOf, onLoop) {
+  const grid = $("#grid-" + key);
+  grid.innerHTML = windows.map(w => cardHTML(w, mode)).join("");
+  const cards = [...grid.children].map((el, i) => {
+    const w = windows[i], pred = predOf(w);
+    $(".fields", el).innerHTML = DATA.fields.map(k => fieldRow(k, pred, w.label, mode !== "teacher")).join("");
+    const img = $("img", el);
+    for (let f = 0; f < DATA.frames_per_window; f++) { const p = new Image(); p.src = `frames/${w.window_id}/f${String(f).padStart(2, "0")}.jpg`; }
+    return { el, w, pred, img, rows: [...el.querySelectorAll(".f")], v: $(".verdict", el) };
+  });
+  const N = DATA.frames_per_window, nf = DATA.fields.length;
+  let tick = 0, timer = null, playing = false, visible = false, loops = 0;
+  function render() {
+    const frame = Math.min(tick, N - 1);
+    cards.forEach(c => {
+      c.img.src = `frames/${c.w.window_id}/f${String(frame).padStart(2, "0")}.jpg`;
+      $(".chip", c.el).textContent = `t+${(frame * DATA.frame_spacing_s).toFixed(1)} s`;
+      $(".fr", c.el).textContent = `${frame + 1}/${N}`;
+      $(".bar", c.el).style.width = ((frame + 1) / N * 100) + "%";
+      c.rows.forEach((r, k) => {
+        const on = tick >= k + 1;
+        if (on && !r.classList.contains("on")) {
+          r.classList.add("on");
+          const dd = $("dd[data-full]", r);
+          if (dd) typeOut(dd, dd.dataset.full);
+        }
+        if (!on) { r.classList.remove("on"); const dd = $("dd[data-full]", r); if (dd) dd.textContent = ""; }
+      });
+      const showV = tick >= nf + 1;
+      if (showV && !c.v.classList.contains("on")) {
+        const [cls, ic, html] = verdict(mode, c.w, c.pred);
+        c.v.className = "verdict on " + cls; c.v.innerHTML = `<span class="ic">${ic}</span><span>${html}</span>`;
+        if (mode !== "teacher") c.el.classList.add(cls === "good" ? "win-good" : "win-bad");
+      }
+      if (!showV) { c.v.className = "verdict"; c.el.classList.remove("win-good", "win-bad"); }
+    });
+  }
+  function step() {
+    tick++;
+    if (tick > Math.max(N, nf + 1) + HOLD) { tick = 0; loops++; }
+    if (tick === nf + 1 && onLoop) onLoop(cards);
+    render();
+  }
+  function start() { if (!timer) timer = setInterval(step, DATA.frame_spacing_s * 1000); }
+  function stop() { clearInterval(timer); timer = null; }
+  const btn = document.querySelector(`[data-toggle="${key}"]`);
+  playing = true;
+  btn.onclick = () => { playing = !playing; btn.textContent = playing ? "Pause" : "Play"; playing && visible ? start() : stop(); };
+  new IntersectionObserver(es => es.forEach(e => {
+    visible = e.isIntersecting;
+    if (visible && playing) start(); else stop();
+  }), { threshold: 0 }).observe(grid);  // any part visible: a tall stacked grid (phones) never reaches a ratio
+  render();
+}
+function typeOut(el, text) {
+  el.textContent = ""; let i = 0;
+  const id = setInterval(() => { el.textContent = text.slice(0, ++i * 3); if (i * 3 >= text.length) clearInterval(id); }, 30);
+}
+
+// ---------- stats panels ------------------------------------------------------------------
+function panel(key, s, base, title, src) {
+  const rows = [
+    ["macro_f1", "Macro F1", "Balance of precision and recall across the four door states", true],
+    ["accuracy", "Door state right", "Share of windows with the correct door state", true],
+    ["alert_recall", "Open doors caught", "Propped or ajar windows flagged as open", true],
+    ["false_alarm_rate", "False alarms", "Closed or passing windows wrongly flagged as open", false],
+  ];
+  const fmt = (k, v) => k === "macro_f1" ? v.toFixed(2) : pct(v);
+  $("#panel-" + key).innerHTML = `<h3>${esc(title)}</h3><div class="src">${esc(src)}</div>` + rows.map(([k, lab, help, upGood]) => {
+    let d = "";
+    if (base) {
+      const diff = s[k] - base[k], better = upGood ? diff > 0 : diff < 0;
+      const txt = k === "macro_f1" ? (diff >= 0 ? "+" : "−") + Math.abs(diff).toFixed(2) : (diff >= 0 ? "+" : "−") + Math.abs(diff * 100).toFixed(0) + " pts";
+      d = `<span class="delta ${better ? "up" : "down"}">${better ? "▲" : "▼"} ${txt}</span>`;
+    }
+    return `<div class="stat"><div class="lab">${lab}</div><div class="val" data-count="${s[k]}" data-k="${k}">${fmt(k, 0)}</div>${d}<div class="help">${help}</div></div>`;
+  }).join("") + `<div class="tally" id="tally-${key}">In this sample: <b>–</b> of ${DATA.sample.length} door states right</div>`;
+  const panelEl = $("#panel-" + key);
+  new IntersectionObserver((es, ob) => es.forEach(e => {
+    if (!e.isIntersecting) return; ob.disconnect();
+    panelEl.querySelectorAll("[data-count]").forEach(el => {
+      const to = +el.dataset.count, k = el.dataset.k, t0 = performance.now();
+      const tickf = now => { const p = Math.min(1, (now - t0) / 1200), e2 = 1 - Math.pow(1 - p, 3);
+        el.textContent = fmt(k, to * e2); if (p < 1) requestAnimationFrame(tickf); };
+      requestAnimationFrame(tickf);
+    });
+  }), { threshold: 0 }).observe(panelEl);
+}
+function tally(key) {
+  return cards => {
+    const right = cards.filter(c => c.pred && c.pred.door_state === c.w.label.door_state).length;
+    $("#tally-" + key).innerHTML = `In this sample: <b>${right}</b> of ${cards.length} door states right`;
+  };
+}
+
+// ---------- charts --------------------------------------------------------------------------
+const tip = $("#tip");
+function showTip(e, html) { tip.innerHTML = html; tip.classList.add("on");
+  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 8);
+  tip.style.left = x + "px"; tip.style.top = y + "px"; }
+function hideTip() { tip.classList.remove("on"); }
+function tipHTML(m) {
+  const r = (a, b) => `<div class="r"><span>${a}</span><b>${b}</b></div>`;
+  return `<div class="t">${esc(m.name)}</div>` + r("Macro F1", m.macro_f1.toFixed(3)) + r("Door state right", pct(m.accuracy)) +
+    r("Open doors caught", pct(m.alert_recall)) + r("False alarms", pct(m.false_alarm_rate)) + r("Valid JSON", pct(m.valid_json_rate)) +
+    r("Median latency" + (m.latency_estimated ? " †" : ""), m.latency_p50_s.toFixed(1) + " s") +
+    r((m.latency_estimated ? "p90" : "p95") + " latency" + (m.latency_estimated ? " †" : ""), m.latency_p95_s.toFixed(1) + " s") +
+    r("Per camera / month" + (m.cost_estimated ? " †" : ""), money(m.usd_per_camera_month)) +
+    r("Per 10k windows" + (m.cost_estimated ? " †" : ""), money(m.usd_per_window * 1e4));
+}
+function barChart(el, { title, sub, value, fmt, sortAsc, log, domain, ticks, tickFmt, est }) {
+  const ms = [...DATA.models].sort((a, b) => sortAsc ? value(a) - value(b) : value(b) - value(a));
+  const W = 420, rowH = 34, top = 6, nameW = 168, valW = 64, plotW = W - nameW - valW, H = top + ms.length * rowH + 26;
+  const [d0, d1] = domain;
+  const sx = v => log ? (Math.log10(Math.max(v, d0)) - Math.log10(d0)) / (Math.log10(d1) - Math.log10(d0)) * plotW
+                     : (v - d0) / (d1 - d0) * plotW;
+  const best = ms[0];
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">`;
+  ticks.forEach(t => { const x = nameW + sx(t);
+    svg += `<line class="gridline" x1="${x}" x2="${x}" y1="${top - 2}" y2="${top + ms.length * rowH}"/>` +
+           `<text class="tick" x="${x}" y="${top + ms.length * rowH + 16}" text-anchor="middle">${tickFmt(t)}</text>`; });
+  svg += `<line class="baseline" x1="${nameW}" x2="${nameW}" y1="${top - 2}" y2="${top + ms.length * rowH}"/>`;
+  ms.forEach((m, i) => {
+    const y = top + i * rowH, ours = m.group === "ours", w = Math.max(2, sx(value(m)));
+    const label = m.name.replace(" (Qwen3.5-4B + LoRA)", "");
+    svg += `<text class="name${ours ? " ours" : ""}" x="${nameW - 10}" y="${y + rowH / 2 + 4}" text-anchor="end">${esc(label)}</text>` +
+      `<rect class="b" data-w="${w}" x="${nameW}" y="${y + 8}" width="0" height="${rowH - 16}" rx="4" fill="${ours ? "var(--accent)" : "var(--bar-other)"}"/>` +
+      `<text class="val${ours ? " ours" : ""}" x="${nameW + w + 6}" y="${y + rowH / 2 + 4}" data-x="${nameW + w + 6}">${fmt(value(m))}${est(m) ? " †" : ""}</text>` +
+      (ours && m === best ? `<text class="crown" x="${W}" y="${y + rowH / 2 + 4}" text-anchor="end">BEST</text>` : "") +
+      `<rect class="hit" data-i="${DATA.models.indexOf(m)}" x="0" y="${y}" width="${W}" height="${rowH}"/>`;
+  });
+  svg += `</svg>`;
+  el.innerHTML = `<h3>${esc(title)}</h3><div class="sub">${esc(sub)}</div>${svg}`;
+  el.querySelectorAll("rect.hit").forEach(h => {
+    const m = DATA.models[+h.dataset.i];
+    h.addEventListener("mousemove", e => showTip(e, tipHTML(m)));
+    h.addEventListener("mouseleave", hideTip);
+  });
+  new IntersectionObserver((es, ob) => es.forEach(e => { if (!e.isIntersecting) return; ob.disconnect();
+    el.querySelectorAll("rect.b").forEach(r => r.setAttribute("width", r.dataset.w)); }), { threshold: 0.3 }).observe(el);
+}
+
+function charts() {
+  const box = $("#charts");
+  box.innerHTML = `<div class="chart" id="c-acc"></div><div class="chart" id="c-cost"></div><div class="chart" id="c-speed"></div>`;
+  barChart($("#c-acc"), { title: "Accuracy", sub: "Macro F1 on held-out camera B · higher is better", value: m => m.macro_f1,
+    fmt: v => v.toFixed(2), sortAsc: false, domain: [0, 1], ticks: [0, 0.25, 0.5, 0.75, 1], tickFmt: t => t.toFixed(2), est: () => false });
+  const maxCost = Math.max(...DATA.models.map(m => m.usd_per_camera_month));
+  const hi = Math.pow(10, Math.ceil(Math.log10(maxCost)));
+  const tks = []; for (let t = 10; t <= hi; t *= 10) tks.push(t);
+  barChart($("#c-cost"), { title: "Cost", sub: "Per camera per month, continuous · log scale · lower is better", value: m => m.usd_per_camera_month,
+    fmt: money, sortAsc: true, log: true, domain: [10, hi], ticks: tks, tickFmt: t => t >= 1000 ? "$" + t / 1000 + "k" : "$" + t, est: m => m.cost_estimated });
+  const maxL = Math.ceil(Math.max(...DATA.models.map(m => m.latency_p95_s)) / 5) * 5;
+  const lt = []; for (let t = 0; t <= maxL; t += maxL > 12 ? 5 : maxL > 8 ? 2 : 1) lt.push(t);
+  barChart($("#c-speed"), { title: "Speed", sub: "Slowest 1 in 20 windows (p95), in seconds · sets the worst-case alert delay · lower is better", value: m => m.latency_p95_s,
+    fmt: v => v.toFixed(1) + " s", sortAsc: true, domain: [0, maxL], ticks: lt, tickFmt: t => t + " s", est: m => m.latency_estimated });
+
+  const head = ["Model", "Macro F1", "Door state right", "Open doors caught", "False alarms", "Median latency", "p95 latency", "Per camera / month"];
+  $("#table").innerHTML = `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>` +
+    [...DATA.models].sort((a, b) => b.macro_f1 - a.macro_f1).map(m => `<tr class="${m.group === "ours" ? "ours" : ""}"><td>${esc(m.name)}</td>
+      <td>${m.macro_f1.toFixed(3)}</td><td>${pct(m.accuracy)}</td><td>${pct(m.alert_recall)}</td><td>${pct(m.false_alarm_rate)}</td>
+      <td>${m.latency_p50_s.toFixed(1)} s${m.latency_estimated ? " †" : ""}</td><td>${m.latency_p95_s.toFixed(1)} s${m.latency_estimated ? " † (p90)" : ""}</td><td>${money(m.usd_per_camera_month)}${m.cost_estimated ? " †" : ""}</td></tr>`).join("") + `</tbody></table>`;
+
+  const o = DATA.opus_latency_source;
+  $("#foot").innerHTML = [
+    `Accuracy: 114 windows from 18 scenes on a camera no model trained on, all simulated. The 95% interval on AisleWatch's lead over Gemini 3.8 Flash is about −0.08 to +0.20 F1 (resampled by scene), so treat it as on par or better, not a settled win.`,
+    `API models ran with reasoning off or minimal, like the Qwen models. Gemini 3.8 Flash can't turn reasoning off; it got a 2,000-token answer limit so its JSON could finish.`,
+    `Speed: the chart shows p95 because the slow tail sets how late an alert can be. On median latency, Gemini 3.5 Flash-Lite (${DATA.models.find(m => m.name.includes("Flash-Lite"))?.latency_p50_s.toFixed(2)} s) is level with AisleWatch (${DATA.models.find(m => m.group === "ours").latency_p50_s.toFixed(2)} s). Self-hosted latency is measured on one GPU with 6 concurrent requests.`,
+    `Cost: API models are measured tokens × OpenRouter list price (checked 13–14 Oct 2026). Self-hosted models are $0.75–0.82 per GPU-hour × measured throughput on one 48 GB GPU, which is about 13 cameras per GPU.`,
+    `† Claude Opus 5.5 ran through a Claude subscription, so its cost is estimated from OpenRouter's list price ($4 / $20 per million tokens) and Anthropic's image-token formula. Its latency is estimated from OpenRouter's served stats for the Anthropic endpoint (${o.checked}): time to first token (${o.ttft_p50_s} s median) plus output tokens at ${o.tps_p50} tokens per second; the speed bar is the p90 version (${o.ttft_p90_s} s, ${o.tps_p90} tokens per second), since OpenRouter doesn't publish p95. Its accuracy is real: it viewed all ten frames through the CLI.`,
+  ].map(t => `<li>${t}</li>`).join("");
+}
+
+// ---------- hero ------------------------------------------------------------------------------
+function kpis() {
+  const ours = DATA.models.find(m => m.group === "ours");
+  const others = DATA.models.filter(m => m.group === "api");
+  const bestF1 = others.reduce((a, b) => b.macro_f1 > a.macro_f1 ? b : a);
+  const g = DATA.models.find(m => m.name === "Gemini 3.8 Flash") || bestF1;
+  $("#kpis").innerHTML = [
+    ["Accuracy (macro F1)", ours.macro_f1.toFixed(2), `vs <b>${bestF1.macro_f1.toFixed(2)}</b> for the best frontier API (${esc(bestF1.name)})`],
+    ["Cost per camera per month", money(ours.usd_per_camera_month), `vs <b>${money(g.usd_per_camera_month)}</b> for ${esc(g.name)}, ${Math.round(g.usd_per_camera_month / ours.usd_per_camera_month)}× more`],
+    ["Median time per window", ours.latency_p50_s.toFixed(1) + " s", `vs <b>${g.latency_p50_s.toFixed(1)} s</b> for ${esc(g.name)}, on one rented GPU`],
+  ].map(([k, v, vs]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="vs">${vs}</div></div>`).join("");
+}
+
+let DATA;
+fetch("data.json").then(r => r.json()).then(d => {
+  DATA = d;
+  document.querySelectorAll("[data-teacher-name]").forEach(e => e.textContent = d.teacher_model);
+  kpis();
+  makeSection("teacher", d.teacher, "teacher", w => w.teacher);
+  panel("before", d.stats["qwen4b-base"], null, "Qwen3.5-4B (base), all 114 windows", "Held-out camera B · no training");
+  panel("after", d.stats["qwen4b-v2"], d.stats["qwen4b-base"], "AisleWatch, all 114 windows", "Held-out camera B · change vs base");
+  makeSection("before", d.sample, "before", w => w.base, tally("before"));
+  makeSection("after", d.sample, "after", w => w.ours, tally("after"));
+  charts();
+});
+</script>
+</body>
+</html>
