@@ -33,7 +33,10 @@ for size in $SIZES; do   # reuse adapters already trained (pipeline.sh then skip
 done
 
 log "start pipeline (sizes: $SIZES)"
-"${SSH[@]}" "cd aislewatch && nohup bash pod/pipeline.sh $DATASET $RUN '$SIZES' $EPOCHS $LR > ~/pipeline.log 2>&1 < /dev/null &" < /dev/null || exit 1
+# "cd X || exit; nohup ... &" (not "cd X && nohup ... &"): with &&, the & backgrounds the whole list as a
+# subshell that keeps SSH's output channel open, so this call blocked for the entire run and the watch loop
+# below (stall / SSH-loss detection) never ran; a network blip then killed a healthy run (Oct 13, v2).
+"${SSH[@]}" "cd aislewatch || exit 1; nohup bash pod/pipeline.sh $DATASET $RUN '$SIZES' $EPOCHS $LR > ~/pipeline.log 2>&1 < /dev/null &" < /dev/null || exit 1
 
 last=""; last_change=$(date +%s); ssh_fail=0; result=1
 while true; do
