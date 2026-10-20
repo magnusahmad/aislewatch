@@ -350,9 +350,12 @@ def export(dest: Path) -> None:
                                    for m, _, _ in LIVE_MODELS)]
     if not good:
         raise SystemExit("no complete recorded live run to replay; do one live run first")
-    if dest.exists():
-        shutil.rmtree(dest)
-    shutil.copytree(OUT, dest, ignore=shutil.ignore_patterns("live_runs", "gifs", "teacher.json"))
+    if dest.exists():  # keep the hosting link (.vercel) so repeat deploys go to the same project
+        for child in dest.iterdir():
+            if child.name != ".vercel":
+                shutil.rmtree(child) if child.is_dir() else child.unlink()
+    shutil.copytree(OUT, dest, ignore=shutil.ignore_patterns("live_runs", "gifs", "teacher.json"), dirs_exist_ok=True)
+    (dest / ".vercelignore").write_text(".env*\n.gitignore\n")  # never publish env files the Vercel CLI writes here
     data = json.loads((dest / "data.json").read_text())
     data["static"] = True
     data["replay"] = {"recorded": good[-1].stem, "events": json.loads(good[-1].read_text())}
