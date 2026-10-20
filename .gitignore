@@ -10,3 +10,4 @@ models/adapters/*
 __pycache__/
 *.pyc
 .DS_Store
+site/

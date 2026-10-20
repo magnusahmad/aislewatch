@@ -438,6 +438,25 @@ function live() {
     if (usd == null) return "";
     return "$" + (usd >= 0.001 ? usd.toFixed(4) : usd.toFixed(6));
   }
+  // Static hosting (aw-showcase export): no live models; replay the recorded run in the browser with its timings.
+  async function replayStatic() {
+    reset(); $("#live-run").disabled = true;
+    const R = D.replay, t0 = performance.now();
+    D.live.models.forEach(m => { const el = $(".timer", lane(m.id)); el.classList.add("running");
+      timers[m.id] = setInterval(() => { el.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 50); });
+    handle({ type: "replay", recorded: R.recorded });
+    for (const e of R.events) {
+      const wait = e.t * 1000 - (performance.now() - t0);
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+      handle(e);
+    }
+    Object.values(timers).forEach(clearInterval); $("#live-run").disabled = false;
+  }
+  if (D.static) {
+    const b = $("#live-run"); b.textContent = "Replay live run"; b.onclick = replayStatic;
+    $("#live-note").textContent = "";
+    return;
+  }
   $("#live-run").onclick = () => run("/api/live", "POST");
   fetch("/api/live/status", { cache: "no-store" }).then(r => r.json()).then(s => {
     if (s.replay_available) {  // always offered when a recorded run exists: the fallback if the network fails mid-demo

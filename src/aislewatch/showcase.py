@@ -342,14 +342,39 @@ def serve(port: int, vllm_url: str | None) -> None:
     http.server.ThreadingHTTPServer(("127.0.0.1", port), handler).serve_forever()
 
 
+def export(dest: Path) -> None:
+    """Static copy of the built site for free static hosting (e.g. Vercel). No live models: the live section replays
+    the newest recorded run in which every model answered, with its original timings, entirely in the browser."""
+    runs = sorted(LIVE_RUNS.glob("*.json")) if LIVE_RUNS.exists() else []
+    good = [r for r in runs if all(any(e["model"] == m and e["type"] == "done" and e.get("pred") for e in json.loads(r.read_text()))
+                                   for m, _, _ in LIVE_MODELS)]
+    if not good:
+        raise SystemExit("no complete recorded live run to replay; do one live run first")
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(OUT, dest, ignore=shutil.ignore_patterns("live_runs", "gifs", "teacher.json"))
+    data = json.loads((dest / "data.json").read_text())
+    data["static"] = True
+    data["replay"] = {"recorded": good[-1].stem, "events": json.loads(good[-1].read_text())}
+    (dest / "data.json").write_text(json.dumps(data))
+    print(f"exported {dest} ({sum(f.stat().st_size for f in dest.rglob('*') if f.is_file()) / 1e6:.1f} MB), replay of {good[-1].stem}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("build")
     s = sub.add_parser("serve"); s.add_argument("--port", type=int, default=8790)
     s.add_argument("--vllm-url", help="vLLM serving qwen4b-base and qwen4b-v2, e.g. http://localhost:8000/v1 through an SSH tunnel")
+    e = sub.add_parser("export", help="static copy for free hosting; the live section replays a recorded run")
+    e.add_argument("dest", nargs="?", default=str(pp.REPO_ROOT / "site"))
     a = ap.parse_args()
-    build() if a.cmd == "build" else serve(a.port, a.vllm_url)
+    if a.cmd == "build":
+        build()
+    elif a.cmd == "export":
+        export(Path(a.dest))
+    else:
+        serve(a.port, a.vllm_url)
 
 
 if __name__ == "__main__":
